@@ -1,14 +1,14 @@
 module Main where
 
 import Control.Monad (forever)
-import Network.Socket
+import Network
+import System.IO
 
-loop :: Socket -> IO ()
-loop s = getLine >>= send s >> recv s 1024 >>= putStrLn
+loop :: Handle -> IO ()
+loop h = getLine >>= hPutStrLn h >> hGetLine h >>= putStrLn
 
 main :: IO ()
 main = withSocketsDo $
-         do serveraddr:_ <- getAddrInfo (Just defaultHints) (Just "127.0.0.1") (Just "7123")
-            sock <- socket (addrFamily serveraddr) Stream defaultProtocol
-            connect sock (addrAddress serveraddr)
-            forever (loop sock)
+         do h <- connectTo "127.0.0.1" (PortNumber 7123)
+            hSetBuffering h NoBuffering
+            forever (loop h)
