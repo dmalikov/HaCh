@@ -13,5 +13,5 @@ main :: IO ()
 main = withSocketsDo $ do
          socket <- listenOn (PortNumber 7123)
          (h, _, _) <- accept socket
-         hSetBuffering h NoBuffering
+         hSetBuffering h LineBuffering
          forever (loop h)

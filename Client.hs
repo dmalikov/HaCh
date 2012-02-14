@@ -10,5 +10,5 @@ loop h = getLine >>= hPutStrLn h >> hGetLine h >>= putStrLn
 main :: IO ()
 main = withSocketsDo $
          do h <- connectTo "127.0.0.1" (PortNumber 7123)
-            hSetBuffering h NoBuffering
+            hSetBuffering h LineBuffering
             forever (loop h)
