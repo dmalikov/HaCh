@@ -2,20 +2,21 @@ module Main where
 
 import Control.Monad (forever, unless, void)
 import Control.Concurrent (forkIO)
+import Control.Concurrent.Chan
 import Network.Socket
 import System.IO
 
-loop :: Handle -> IO ()
-loop h = do r <- hGetLine h
-            unless (null r) (void $ hPutStrLn h r)
-            loop h
+readLoop :: Chan String -> IO ()
+readLoop ch = readChan ch >>= putStrLn
 
-serve :: Socket -> IO ()
-serve sock = do (s, _) <- accept sock
-                h <- socketToHandle s ReadWriteMode
-                hSetBuffering h LineBuffering
-                forkIO (loop h)
-                serve sock
+clientLoop :: Chan String -> Handle -> IO ()
+clientLoop ch h = hGetLine h >>= writeChan ch
+
+serve :: Socket -> Chan String -> IO ()
+serve sock ch = do (s, _) <- accept sock
+                   h <- socketToHandle s ReadWriteMode
+                   hSetBuffering h LineBuffering
+                   void $ forkIO (forever $ clientLoop ch h)
 
 main :: IO ()
 main = withSocketsDo $ do
@@ -23,4 +24,6 @@ main = withSocketsDo $ do
          setSocketOption sock ReuseAddr 1
          bindSocket sock (SockAddrInet 7123 iNADDR_ANY)
          listen sock 1024
-         serve sock
+         ch <- newChan
+         forkIO (forever $ readLoop ch)
+         forever $ serve sock ch
