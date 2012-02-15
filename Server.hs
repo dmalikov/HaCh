@@ -6,17 +6,17 @@ import Control.Concurrent.Chan
 import Network.Socket
 import System.IO
 
-readLoop :: Chan String -> IO ()
-readLoop ch = readChan ch >>= putStrLn
+readLoop :: Chan String -> Handle -> IO ()
+readLoop ch h = readChan ch >>= hPutStrLn h
 
-clientLoop :: Chan String -> Handle -> IO ()
-clientLoop ch h = hGetLine h >>= writeChan ch
+client :: Chan String -> Handle -> IO ()
+client ch h = forkIO (forever $ readLoop ch h) >> (forever $ hGetLine h >>= writeChan ch)
 
 serve :: Socket -> Chan String -> IO ()
 serve sock ch = do (s, _) <- accept sock
                    h <- socketToHandle s ReadWriteMode
                    hSetBuffering h LineBuffering
-                   void $ forkIO (forever $ clientLoop ch h)
+                   void $ forkIO (dupChan ch >>= flip client h)
 
 main :: IO ()
 main = withSocketsDo $ do
@@ -25,5 +25,4 @@ main = withSocketsDo $ do
          bindSocket sock (SockAddrInet 7123 iNADDR_ANY)
          listen sock 1024
          ch <- newChan
-         forkIO (forever $ readLoop ch)
          forever $ serve sock ch
