@@ -32,4 +32,5 @@ main = withSocketsDo $ do
          bindSocket sock (SockAddrInet 7123 iNADDR_ANY)
          listen sock 1024
          ch <- newChan
+         forkIO $ (forever $ readChan ch >>= const (return ()))
          serve sock ch 0
