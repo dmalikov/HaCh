@@ -11,7 +11,7 @@ import Types
 
 readC :: Chan (Int, Message) -> Handle -> Int -> IO ()
 readC ch h n = do (n', m) <- readChan ch
-                  hPutStrLn h (show m)
+                  hPrint h m
 
 client :: Chan (Int, Message) -> Handle -> Int -> IO ()
 client ch h n = do ch' <- dupChan ch
@@ -33,5 +33,5 @@ main = withSocketsDo $ do
          bindSocket sock (SockAddrInet 7123 iNADDR_ANY)
          listen sock 1024
          ch <- newChan
-         forkIO $ (forever $ readChan ch >>= const (return ()))
+         forkIO $ forever $ readChan ch >>= const (return ())
          serve sock ch 0
