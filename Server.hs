@@ -1,24 +1,25 @@
 {-# LANGUAGE BangPatterns #-}
 module Main where
 
-import Control.Monad (forever, unless, void, when)
+import Control.Monad (forever, when)
 import Control.Concurrent (forkIO)
 import Control.Concurrent.Chan
 import Network.Socket
-import Prelude hiding (read)
 import System.IO
 
-read :: Chan (Int, String) -> Handle -> Int -> IO ()
-read ch h n = do (n', m) <- readChan ch
-                 when (n' /= n) (hPutStrLn h m)
+import Types
 
-client :: Chan (Int, String) -> Handle -> Int -> IO ()
+readC :: Chan (Int, Message) -> Handle -> Int -> IO ()
+readC ch h n = do (n', m) <- readChan ch
+                  hPrint h m
+
+client :: Chan (Int, Message) -> Handle -> Int -> IO ()
 client ch h n = do ch' <- dupChan ch
-                   forkIO (forever $ read ch' h n)
+                   forkIO (forever $ readC ch' h n)
                    forever $ do m <- hGetLine h
-                                writeChan ch' (n, m)
+                                writeChan ch' (n, read m)
 
-serve :: Socket -> Chan (Int, String) -> Int -> IO ()
+serve :: Socket -> Chan (Int, Message) -> Int -> IO ()
 serve sock ch !n = do (s, _) <- accept sock
                       h <- socketToHandle s ReadWriteMode
                       hSetBuffering h LineBuffering
@@ -32,5 +33,5 @@ main = withSocketsDo $ do
          bindSocket sock (SockAddrInet 7123 iNADDR_ANY)
          listen sock 1024
          ch <- newChan
-         forkIO $ (forever $ readChan ch >>= const (return ()))
+         forkIO $ forever $ readChan ch >>= const (return ())
          serve sock ch 0
