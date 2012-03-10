@@ -11,7 +11,7 @@ import Types
 
 readC :: Chan (Int, Message) -> Handle -> Int -> IO ()
 readC ch h n = do (n', m) <- readChan ch
-                  when (n' /= n) $ hPutStrLn h (show m)
+                  hPutStrLn h (show m)
 
 client :: Chan (Int, Message) -> Handle -> Int -> IO ()
 client ch h n = do ch' <- dupChan ch
