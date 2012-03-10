@@ -7,15 +7,19 @@ import System.IO
 
 import Types
 
-client :: Handle -> IO ()
-client h = forkIO (forever $ hGetLine h >>= putStrLn . formatMessage . unpack)
-               >> (forever $ getLine >>= hPutStrLn h)
-
-formatMessage :: Message -> String
-formatMessage = show
+client :: Nick -> Handle -> IO ()
+client nick h = forkIO (forever $ hGetLine h >>= putStrLn) >> (forever $ getLine >>= hPutStrLn h . packMessage)
+    where packMessage = pack . formatMessage nick . Text
 
 main :: IO ()
-main = withSocketsDo $
-         do h <- connectTo "127.0.0.1" $ PortNumber 7123
-            hSetBuffering h LineBuffering
-            client h
+main = do
+  putStrLn "Set your nick, please"
+  nick <- getLine
+  putStrLn $ "Your nick is changed to \"" ++ nick ++ "\""
+  withSocketsDo $
+    do h <- connectTo "127.0.0.1" $ PortNumber 7123
+       hSetBuffering h LineBuffering
+       client (Nick nick) h
+
+formatMessage :: Nick -> Text -> Message
+formatMessage (Nick nick) (Text text) = Message (Nick nick) (Text text) (Timestamp 3)

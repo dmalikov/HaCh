@@ -5,23 +5,21 @@ import Control.Monad (forever, when)
 import Control.Concurrent (forkIO)
 import Control.Concurrent.Chan
 import Network.Socket
-import Prelude hiding (read)
 import System.IO
 
 import Types
 
-read :: Chan (Int, String) -> Handle -> Int -> IO ()
-read ch h n = do (n', m) <- readChan ch
-                 when (n' /= n) $ hPutStrLn h m
+readC :: Chan (Int, Message) -> Handle -> Int -> IO ()
+readC ch h n = do (n', m) <- readChan ch
+                  when (n' /= n) $ hPutStrLn h (show m)
 
-client :: Chan (Int, String) -> Handle -> Int -> IO ()
+client :: Chan (Int, Message) -> Handle -> Int -> IO ()
 client ch h n = do ch' <- dupChan ch
-                   forkIO (forever $ read ch' h n)
+                   forkIO (forever $ readC ch' h n)
                    forever $ do m <- hGetLine h
-                                writeChan ch' (n, pack $ message m)
-  where message m' = Message (Nick ("user" ++ show n)) (Text m') (Timestamp 1)
+                                writeChan ch' (n, read m)
 
-serve :: Socket -> Chan (Int, String) -> Int -> IO ()
+serve :: Socket -> Chan (Int, Message) -> Int -> IO ()
 serve sock ch !n = do (s, _) <- accept sock
                       h <- socketToHandle s ReadWriteMode
                       hSetBuffering h LineBuffering
