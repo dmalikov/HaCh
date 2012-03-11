@@ -19,6 +19,6 @@ pack :: Message -> String
 pack (Message (Nick nick) (Text text)) = "<" ++ nick ++ ">: " ++ text
 
 messageP :: GenParser Char st Message
-messageP = do
-  messagify <$> (char '<' *> many1 (noneOf ">")) <*> ( string ">:" *> many1 anyChar)
+messageP =
+  messagify <$> (char '<' *> many1 (noneOf ">")) <*> ( string ">: " *> many1 anyChar)
     where messagify n t = Message (Nick n) (Text t)
