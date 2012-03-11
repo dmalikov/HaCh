@@ -6,6 +6,8 @@ import Control.Monad (forever)
 import Data.Time.Clock (getCurrentTime)
 import Data.Time.Format
 import Network
+import System (getArgs)
+import System.Console.GetOpt
 import System.IO
 import System.Locale
 import Text.Printf (printf)
@@ -25,10 +27,32 @@ printMessage (Text t) = do
 
 main :: IO ()
 main = do
+  serverIP <- serverFromArgs =<< parseArgs =<< getArgs
   putStrLn "Set your nick, please"
   nick <- getLine
   putStrLn $ "Your nick is changed to \"" ++ nick ++ "\""
   withSocketsDo $
-    do h <- connectTo "127.0.0.1" $ PortNumber 7123
+    do h <- connectTo serverIP $ PortNumber 7123
        hSetBuffering h LineBuffering
        client (Nick nick) h
+
+data Flag = ServerIP String
+
+options :: [OptDescr Flag]
+options =
+  [ Option "S" ["server"] (ReqArg ServerIP "server_ip") "set server ip adress"
+  ]
+
+parseArgs :: [String] -> IO [Flag]
+parseArgs argv = case getOpt Permute options argv of
+  (os, _, []) -> return os
+  (_, _, es) -> error $ concat es ++ usageInfo header options
+    where
+      header = "Usage: ./Client.hs [OPTIONS...]"
+
+serverFromArgs :: [Flag] -> IO String
+serverFromArgs xs =
+  case [ s | ServerIP s <- xs ] of
+    [] -> error "serverIP undefined"
+    (s:_) -> return s
+
