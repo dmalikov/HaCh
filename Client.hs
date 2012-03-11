@@ -16,14 +16,14 @@ import Types
 
 client :: Nick -> Handle -> IO ()
 client nick h = forkIO
-  (forever $ hGetLine h >>= printMessage . Text) >>
+  (forever $ hGetLine h >>= printMessage . read) >>
   (forever $ getLine >>= hPutStrLn h . packMessage >> putStrLn "\ESC[2A")
-    where packMessage = pack . Message nick . Text
+    where packMessage = show . Message nick . Text
 
-printMessage :: Text -> IO ()
-printMessage (Text t) = do
+printMessage :: Message -> IO ()
+printMessage (Message (Nick n) (Text t)) = do
   timestamp <- formatTime defaultTimeLocale "%H:%M:%S" <$> getCurrentTime
-  printf "[%s] %s\n" timestamp t
+  printf "[%s] <%s>: %s\n" timestamp n t
 
 main :: IO ()
 main = do
