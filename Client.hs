@@ -13,6 +13,7 @@ import System.IO
 import System.Locale
 import Text.Printf (printf)
 
+import Format
 import Types
 
 client :: Nick -> Handle -> IO ()
@@ -20,17 +21,14 @@ client nick h = forkIO
   (forever $ hGetLine h >>= printMessage . read) >>
   (forever $ getLine >>= hPutStrLn h . processMessage >> hideOwnMessage)
     where
-      processMessage text | "/me " `isPrefixOf` text = show $ Message Action nick $ Text $ drop (length "/me ") text
+      processMessage text | commandAction `isPrefixOf` text = show $ Message Action nick $ Text $ drop (length commandAction) text
                           | otherwise = show $ Message Plain nick (Text text)
       hideOwnMessage = putStrLn "\ESC[2A"
 
 printMessage :: Message -> IO ()
-printMessage (Message mtype (Nick nick) (Text text)) = do
-  timestamp <- formatTime defaultTimeLocale "%H:%M:%S" <$> getCurrentTime
-  case mtype of
-    Plain -> printf "[%s] <%s>: %s\n" timestamp nick text
-    Action -> printf "[%s] *%s %s\n" timestamp nick text
-    System -> printf "[%s] %s\n" timestamp text
+printMessage (Message mtype nick (Text text)) = do
+  timestamp <- formatTime defaultTimeLocale timeFormat <$> getCurrentTime
+  printf (format (mtype, nick)) timestamp text
 
 main :: IO ()
 main = do
