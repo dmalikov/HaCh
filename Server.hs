@@ -1,7 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 module Main where
 
-import Control.Monad (forever, when)
+import Control.Monad (forever)
 import Control.Concurrent (forkIO)
 import Control.Concurrent.Chan
 import Network.Socket
@@ -10,7 +10,7 @@ import System.IO
 import Types
 
 readC :: Chan (Int, Message) -> Handle -> Int -> IO ()
-readC ch h n = do (n', m) <- readChan ch
+readC ch h _ = do (_, m) <- readChan ch
                   hPrint h m
 
 client :: Chan (Int, Message) -> Handle -> Int -> IO ()
