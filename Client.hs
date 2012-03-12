@@ -3,6 +3,7 @@ module Main where
 import Control.Applicative ((<$>))
 import Control.Concurrent (forkIO)
 import Control.Monad (forever)
+import Data.List (isPrefixOf)
 import Data.Time.Clock (getCurrentTime)
 import Data.Time.Format
 import Network
@@ -17,13 +18,19 @@ import Types
 client :: Nick -> Handle -> IO ()
 client nick h = forkIO
   (forever $ hGetLine h >>= printMessage . read) >>
-  (forever $ getLine >>= hPutStrLn h . packMessage >> putStrLn "\ESC[2A")
-    where packMessage = show . Message nick . Text
+  (forever $ getLine >>= hPutStrLn h . processMessage >> hideOwnMessage)
+    where
+      processMessage text | "/me " `isPrefixOf` text = show $ Message Action nick $ Text $ drop (length "/me ") text
+                          | otherwise = show $ Message Plain nick (Text text)
+      hideOwnMessage = putStrLn "\ESC[2A"
 
 printMessage :: Message -> IO ()
-printMessage (Message (Nick n) (Text t)) = do
+printMessage (Message mtype (Nick nick) (Text text)) = do
   timestamp <- formatTime defaultTimeLocale "%H:%M:%S" <$> getCurrentTime
-  printf "[%s] <%s>: %s\n" timestamp n t
+  case mtype of
+    Plain -> printf "[%s] <%s>: %s\n" timestamp nick text
+    Action -> printf "[%s] *%s %s\n" timestamp nick text
+    System -> printf "[%s] %s\n" timestamp text
 
 main :: IO ()
 main = do
@@ -55,4 +62,3 @@ serverFromArgs xs =
   case [ s | ServerIP s <- xs ] of
     [] -> error "serverIP undefined"
     (s:_) -> return s
-
