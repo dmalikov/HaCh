@@ -7,7 +7,7 @@ import Data.List (isPrefixOf)
 import Data.Time.Clock (getCurrentTime)
 import Data.Time.Format
 import Network
-import System (getArgs)
+import System.Environment (getArgs)
 import System.Console.GetOpt
 import System.IO
 import System.Locale
