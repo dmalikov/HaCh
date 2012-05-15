@@ -23,23 +23,24 @@ client ∷ Storage → Chan (Int, Message) → Handle → Int → IO ()
 client storage ch h cId = do
   ch' ← dupChan ch
   forkIO (forever $ readC storage ch' h cId)
-  handle (onDisconnect ch') $ forever $ do
+  forever $ do
     m ← hGetLine h
     writeChan ch' (cId, read m)
-  where onDisconnect ∷ Chan (Int, Message) → SomeException → IO ()
-        onDisconnect ch' _ = do
-          maybeNick ← getNick storage cId
-          case maybeNick of
-            Just nick → writeChan ch' (cId, Message System nick (Text "has quit conversation"))
-            Nothing → putStrLn "Error: undefined user has quit conversation"
 
 serve ∷ Socket → Storage → Chan (Int, Message) → Int → IO ()
 serve sock storage ch !cId = do
   (s, _) ← accept sock
   h ← socketToHandle s ReadWriteMode
   hSetBuffering h LineBuffering
-  forkIO $ client storage ch h cId
+  forkIO $ handle (onDisconnect ch) $ client storage ch h cId
   serve sock storage ch $ cId + 1
+  where 
+    onDisconnect ∷ Chan (Int, Message) → SomeException → IO ()
+    onDisconnect ch' _ = do
+      maybeNick ← getNick storage cId
+      case maybeNick of
+        Just nick → writeChan ch' (cId, Message System nick (Text "has quit conversation"))
+        Nothing → putStrLn "Error: undefined user has quit conversation"
 
 main ∷ IO ()
 main = handle onSomething $ withSocketsDo $ do
