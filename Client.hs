@@ -2,6 +2,7 @@ module Main where
 
 import Control.Applicative ((<$>))
 import Control.Concurrent (forkIO)
+import Control.Exception
 import Control.Monad (forever)
 import Data.List (isPrefixOf)
 import Data.Time.Clock (getCurrentTime)
@@ -17,13 +18,17 @@ import Format
 import Types
 
 client :: Nick -> Handle -> IO ()
-client nick h = forkIO
+client nick@(Nick n) h = forkIO
   (forever $ hGetLine h >>= printMessage . read) >>
-  (forever $ getLine >>= hPutStrLn h . processMessage >> hideOwnMessage)
+  (hPutStrLn h . show . Message SetNick nick $ Text n) >>
+  (handle onExit $ forever $ getLine >>= hPutStrLn h . processMessage >> hideOwnMessage)
     where
-      processMessage text | commandAction `isPrefixOf` text = show $ Message Action nick $ Text $ drop (length commandAction) text
-                          | otherwise = show $ Message Plain nick (Text text)
+      processMessage text | commandAction  `isPrefixOf` text = show $ Message Action  nick $ Text $ drop (length commandAction)  text
+                          | commandSetNick `isPrefixOf` text = show $ Message SetNick nick $ Text $ drop (length commandSetNick) text
+                          | otherwise = show $ Message Plain nick $ Text text
       hideOwnMessage = putStrLn "\ESC[2A"
+      onExit :: SomeException -> IO ()
+      onExit _ = printf "%s has left" n
 
 printMessage :: Message -> IO ()
 printMessage (Message mtype nick (Text text)) = do
@@ -33,7 +38,7 @@ printMessage (Message mtype nick (Text text)) = do
 main :: IO ()
 main = do
   serverIP <- serverFromArgs =<< parseArgs =<< getArgs
-  putStrLn "Set your nick, please"
+  putStrLn "Set your nick, please:"
   nick <- getLine
   putStrLn $ "Your nick is changed to \"" ++ nick ++ "\""
   withSocketsDo $
