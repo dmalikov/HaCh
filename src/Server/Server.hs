@@ -1,7 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE UnicodeSyntax #-}
 
-module Server where
+module Server.Server where
 
 import Control.Exception
 import Control.Monad (forever, when)

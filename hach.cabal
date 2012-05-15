@@ -1,0 +1,37 @@
+Name:                   Hach
+Version:                0.0.0
+Description:            Simple chat
+
+License:                MIT
+License-file:           LICENSE
+
+Author:                 Matvey Aksenov,
+                        Dmitry Malikov
+
+Maintainer:             Matvey Aksenov <matvey.aksenov@gmail.com>,
+                        Dmitry Malikov <malikov.d.y@gmail.com>
+
+Build-type:             Simple
+Cabal-version:          >= 1.5
+Homepage:               http://github.com/dmalikov/HaCh
+
+
+Library
+  Build-Depends:        base >= 3 && < 5,
+                        containers,
+                        old-locale,
+                        network,
+                        time
+
+  HS-Source-Dirs:       src
+
+  Exposed-Modules:      Libhach.Types
+                        Libhach.Storage
+                        Libhach.Format
+                        Client.Client
+                        Server.Server
+
+  GHC-Options:          -Wall
+
+  Extensions:           BangPatterns
+                        UnicodeSyntax

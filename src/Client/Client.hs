@@ -1,6 +1,6 @@
 {-# LANGUAGE UnicodeSyntax #-}
 
-module Client where
+module Client.Client where
 
 import Control.Applicative ((<$>))
 import Control.Concurrent (forkIO)
