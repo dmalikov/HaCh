@@ -22,10 +22,11 @@ readC storage ch h cId' = do
 client ∷ Storage → Chan (Int, Message) → Handle → Int → IO ()
 client storage ch h cId = do
   ch' ← dupChan ch
-  forkIO (forever $ readC storage ch' h cId)
+  forkIO $ handle_ $ forever $ readC storage ch' h cId
   forever $ do
     m ← hGetLine h
     writeChan ch' (cId, read m)
+  where handle_ = handle $ \(SomeException _) → return ()
 
 serve ∷ Socket → Storage → Chan (Int, Message) → Int → IO ()
 serve sock storage ch !cId = do
@@ -43,7 +44,7 @@ serve sock storage ch !cId = do
         Nothing → putStrLn "Error: undefined user has quit conversation"
 
 main ∷ IO ()
-main = handle onSomething $ withSocketsDo $ do
+main = withSocketsDo $ do
   storage ← newStorage
   sock ← socket AF_INET Stream 0
   setSocketOption sock ReuseAddr 1
@@ -53,5 +54,3 @@ main = handle onSomething $ withSocketsDo $ do
   forkIO $ forever $ readChan ch >>= const (return ())
   serve sock storage ch 0
 
-onSomething ∷ SomeException → IO ()
-onSomething _ = putStrLn "gotcha"
