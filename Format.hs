@@ -1,8 +1,10 @@
+{-# LANGUAGE UnicodeSyntax #-}
+
 module Format where
 
 import Types
 
-format :: (Type, Nick) -> String
+format ∷ (Type, Nick) → String
 format (Plain, Nick nick) = "[%s] <" ++ nick ++ ">: %s\n"
 format (Action, Nick nick) = "[%s] *"++ nick ++ " %s\n"
 format (SetNick, _) = ""
