@@ -12,37 +12,37 @@ import System.IO
 import Storage
 import Types
 
-readC ∷ Storage → Chan (Int, Message) → Handle → ClientId → IO ()
-readC storage ch h (ClientId cId') = do
+readC ∷ Storage → Chan (Int, Message) → Handle → Int → IO ()
+readC storage ch h cId' = do
   (cId, m@(Message mType _ (Text text))) ← readChan ch
   case mType of
-    SetNick → when (cId == cId') $ putNick storage (ClientId cId) (Nick text) >> showStorage storage
+    SetNick → when (cId == cId') $ putNick storage cId (Nick text) >> showStorage storage
     _       → hPrint h m
 
-client ∷ Storage → Chan (Int, Message) → Handle → ClientId → IO ()
-client storage ch h cId@(ClientId n) = do
+client ∷ Storage → Chan (Int, Message) → Handle → Int → IO ()
+client storage ch h cId = do
   ch' ← dupChan ch
   forkIO (forever $ readC storage ch' h cId)
   handle (onDisconnect ch') $ forever $ do
     m ← hGetLine h
-    writeChan ch' (n, read m)
+    writeChan ch' (cId, read m)
   where onDisconnect ∷ Chan (Int, Message) → SomeException → IO ()
         onDisconnect ch' _ = do
           maybeNick ← getNick storage cId
           case maybeNick of
-            Just nick → writeChan ch' (n, Message System nick (Text "has quit conversation"))
+            Just nick → writeChan ch' (cId, Message System nick (Text "has quit conversation"))
             Nothing → putStrLn "Error: undefined user has quit conversation"
 
-serve ∷ Socket → Storage → Chan (Int, Message) → ClientId → IO ()
-serve sock storage ch (ClientId !n) = do
+serve ∷ Socket → Storage → Chan (Int, Message) → Int → IO ()
+serve sock storage ch !cId = do
   (s, _) ← accept sock
   h ← socketToHandle s ReadWriteMode
   hSetBuffering h LineBuffering
-  forkIO $ client storage ch h (ClientId n)
-  serve sock storage ch (ClientId $ n+1)
+  forkIO $ client storage ch h cId
+  serve sock storage ch $ cId + 1
 
 main ∷ IO ()
-main = withSocketsDo $ do
+main = handle onSomething $ withSocketsDo $ do
   storage ← newStorage
   sock ← socket AF_INET Stream 0
   setSocketOption sock ReuseAddr 1
@@ -50,4 +50,7 @@ main = withSocketsDo $ do
   listen sock 1024
   ch ← newChan
   forkIO $ forever $ readChan ch >>= const (return ())
-  serve sock storage ch (ClientId 0)
+  serve sock storage ch 0
+
+onSomething ∷ SomeException → IO ()
+onSomething _ = putStrLn "gotcha"

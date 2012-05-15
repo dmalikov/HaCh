@@ -7,6 +7,5 @@ data Type = Plain
           | System
           deriving (Read, Show)
 
-newtype ClientId = ClientId Int deriving (Eq, Ord, Read, Show)
 newtype Nick = Nick String deriving (Read, Show)
 newtype Text = Text String deriving (Read, Show)

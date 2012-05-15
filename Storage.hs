@@ -11,6 +11,8 @@ import qualified Data.Map as M
 
 import Types
 
+type ClientId = Int
+
 newtype Storage = Storage (MVar (M.Map ClientId Nick))
 
 newStorage ∷ IO Storage
