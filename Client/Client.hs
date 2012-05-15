@@ -1,6 +1,6 @@
 {-# LANGUAGE UnicodeSyntax #-}
 
-module Main where
+module Client where
 
 import Control.Applicative ((<$>))
 import Control.Concurrent (forkIO)
@@ -16,8 +16,8 @@ import System.IO
 import System.Locale
 import Text.Printf (printf)
 
-import Format
-import Types
+import Libhach.Format
+import Libhach.Types
 
 client ∷ Nick → Handle → IO ()
 client nick@(Nick n) h = forkIO
