@@ -22,7 +22,7 @@ import Types
 client ∷ Nick → Handle → IO ()
 client nick@(Nick n) h = forkIO
   (forever $ hGetLine h >>= printMessage . read) >>
-  (hPutStrLn h . show . Message SetNick nick $ Text n) >>
+  (hPrint h . Message SetNick nick $ Text n) >>
   (handle onExit $ forever $ getLine >>= hPutStrLn h . processMessage >> hideOwnMessage)
     where
       processMessage text | commandAction  `isPrefixOf` text = show $ Message Action  nick $ Text $ drop (length commandAction)  text
