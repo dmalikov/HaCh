@@ -2,10 +2,9 @@
 module Main (main) where
 
 import Control.Applicative ((<$>))
-import Control.Arrow ((&&&))
 import Control.Concurrent (forkIO)
 import Control.Exception
-import Control.Monad (forever, liftM2)
+import Control.Monad (forever)
 import Data.List (isPrefixOf)
 import Data.Time.Clock (getCurrentTime)
 import Data.Time.Format
@@ -39,12 +38,12 @@ printMessage (Message mtype nick (Text text)) = do
 
 main ∷ IO ()
 main = do
-  (serverIP, nick) ← (uncurry (liftM2 (,)) . (serverFromArgs &&& nickFromArgs)) =<< parseArgs =<< getArgs
+  (serverIP : nick : _ ) ← parseArgs =<< getArgs
   putStrLn $ "Connected to " ++ serverIP
   withSocketsDo $
     do h ← connectTo serverIP $ PortNumber 7123
        hSetBuffering h LineBuffering
-       client nick h
+       client (Nick nick) h
 
 data Flag = ServerIP String
           | ClientNick String
@@ -55,9 +54,12 @@ options =
   , Option "n" ["nick"] (ReqArg ClientNick "user nickname") "set user nickname"
   ]
 
-parseArgs ∷ [String] → IO [Flag]
+parseArgs ∷ [String] → IO [String]
 parseArgs argv = case getOpt Permute options argv of
-  (os, _, []) → return os
+  (os, _, []) → do
+    serverOpt ← serverFromArgs os
+    nickOpt ← nickFromArgs os
+    return [serverOpt, nickOpt]
   (_, _, es) → error $ concat es ++ usageInfo usage options
 
 serverFromArgs ∷ [Flag] → IO String
@@ -66,10 +68,10 @@ serverFromArgs xs =
     [] → error usage
     (s:_) → return s
 
-nickFromArgs ∷ [Flag] → IO Nick
+nickFromArgs ∷ [Flag] → IO String
 nickFromArgs xs =
   case [ n | ClientNick n ← xs ] of
     [] → error usage
-    (n:_) → return $ Nick n
+    (n:_) → return n
 
 usage = "Usage: hach-client [OPTIONS...]"
