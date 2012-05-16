@@ -1,6 +1,6 @@
 {-# LANGUAGE UnicodeSyntax #-}
 
-module Libhach.Storage
+module Hach.Storage
   ( Storage(..), newStorage, getNick, putNick, showStorage
   ) where
 
@@ -9,7 +9,7 @@ import Control.Concurrent.MVar
 
 import qualified Data.Map as M
 
-import Libhach.Types
+import Hach.Types
 
 type ClientId = Int
 

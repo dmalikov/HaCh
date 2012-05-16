@@ -14,7 +14,6 @@ Build-type:             Simple
 Cabal-version:          >= 1.5
 Homepage:               http://github.com/dmalikov/HaCh
 
-
 Library
   Build-Depends:        base >= 3 && < 5,
                         containers,
@@ -22,15 +21,21 @@ Library
                         network,
                         time
 
-  HS-Source-Dirs:       src
+  HS-Source-Dirs:       libhach
 
-  Exposed-Modules:      Libhach.Types
-                        Libhach.Storage
-                        Libhach.Format
-                        Client.Client
-                        Server.Server
+  Exposed-Modules:      Hach.Types
+                        Hach.Storage
+                        Hach.Format
 
   GHC-Options:          -Wall
 
   Extensions:           BangPatterns
                         UnicodeSyntax
+
+Executable hach-client
+  Main-is:              Client.hs
+  HS-Source-Dirs:       client, libhach
+
+Executable hach-server
+  Main-is:              Server.hs
+  HS-Source-Dirs:       server, libhach

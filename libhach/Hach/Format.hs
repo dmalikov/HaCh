@@ -1,8 +1,8 @@
 {-# LANGUAGE UnicodeSyntax #-}
 
-module Libhach.Format where
+module Hach.Format where
 
-import Libhach.Types
+import Hach.Types
 
 format ∷ (Type, Nick) → String
 format (Plain, Nick nick) = "[%s] <" ++ nick ++ ">: %s\n"

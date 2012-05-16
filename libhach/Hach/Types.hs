@@ -1,4 +1,4 @@
-module Libhach.Types where
+module Hach.Types where
 
 data Message = Message Type Nick Text deriving (Read, Show)
 data Type = Plain

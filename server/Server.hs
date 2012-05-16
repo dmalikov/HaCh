@@ -1,7 +1,6 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE UnicodeSyntax #-}
-
-module Server.Server where
+module Main (main) where
 
 import Control.Exception
 import Control.Monad (forever, when)
@@ -9,8 +8,8 @@ import Control.Concurrent
 import Network.Socket
 import System.IO
 
-import Libhach.Storage
-import Libhach.Types
+import Hach.Storage
+import Hach.Types
 
 readC ∷ Storage → Chan (Int, Message) → Handle → Int → IO ()
 readC storage ch h cId' = do
