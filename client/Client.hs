@@ -21,7 +21,7 @@ import Hach.Types
 
 client ∷ Nick → Handle → IO ()
 client nick@(Nick n) h = forkIO
-  (forever $ hGetLine h >>= printMessage . read) >>
+  (handle onServerDied $ forever $ hGetLine h >>= printMessage . read) >>
   (hPrint h . Message SetNick nick $ Text n) >>
   (handle onExit $ forever $ getLine >>= hPutStrLn h . processMessage >> hideOwnMessage)
     where
@@ -29,8 +29,8 @@ client nick@(Nick n) h = forkIO
                           | commandSetNick `isPrefixOf` text = show $ Message SetNick nick $ Text $ drop (length commandSetNick) text
                           | otherwise = show $ Message Plain nick $ Text text
       hideOwnMessage = putStrLn "\ESC[2A"
-      onExit ∷ SomeException → IO ()
-      onExit _ = printf "%s has left" n
+      onExit (SomeException _) = putStrLn $ n ++" has left"
+      onServerDied (SomeException _) = putStrLn "Server closed connection"
 
 printMessage ∷ Message → IO ()
 printMessage (Message mtype nick (Text text)) = do
