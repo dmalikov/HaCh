@@ -8,8 +8,7 @@ License-file:           LICENSE
 Author:                 Matvey Aksenov,
                         Dmitry Malikov
 
-Maintainer:             Matvey Aksenov <matvey.aksenov@gmail.com>,
-                        Dmitry Malikov <malikov.d.y@gmail.com>
+Maintainer:             Dmitry Malikov <malikov.d.y@gmail.com>
 
 Build-type:             Simple
 Cabal-version:          >= 1.5
