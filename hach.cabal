@@ -29,9 +29,6 @@ Library
 
   GHC-Options:          -Wall
 
-  Extensions:           BangPatterns
-                        UnicodeSyntax
-
 Executable hach-client
   Main-is:              Client.hs
   HS-Source-Dirs:       client, libhach
