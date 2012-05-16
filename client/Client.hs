@@ -65,13 +65,13 @@ parseArgs argv = case getOpt Permute options argv of
 serverFromArgs ∷ [Flag] → IO String
 serverFromArgs xs =
   case [ s | ServerIP s ← xs ] of
-    [] → error usage
+    [] → error $ usageInfo usage options
     (s:_) → return s
 
 nickFromArgs ∷ [Flag] → IO String
 nickFromArgs xs =
   case [ n | ClientNick n ← xs ] of
-    [] → error usage
+    [] → error $ usageInfo usage options
     (n:_) → return n
 
-usage = "Usage: hach-client [OPTIONS...]"
+usage = "Usage: hach-client"
