@@ -20,7 +20,7 @@ import Hach.Types
 
 client ∷ Nick → Handle → IO ()
 client nick@(Nick n) h = forkIO
-  (handle onServerDied $ forever $ hGetLine h >>= printMessage . read) >>
+  (handle onDisconnect $ forever $ hGetLine h >>= printMessage . read) >>
   (hPrint h . Message SetNick nick $ Text n) >>
   (handle onExit $ forever $ getLine >>= hPutStrLn h . processMessage >> hideOwnMessage)
     where
@@ -29,7 +29,7 @@ client nick@(Nick n) h = forkIO
                           | otherwise = show $ Message Plain nick $ Text text
       hideOwnMessage = putStrLn "\ESC[2A"
       onExit (SomeException _) = putStrLn $ n ++" has left"
-      onServerDied (SomeException _) = putStrLn "Server closed connection"
+      onDisconnect (SomeException _) = putStrLn "Server closed connection"
 
 printMessage ∷ Message → IO ()
 printMessage (Message mtype nick (Text text)) = do
@@ -74,4 +74,4 @@ nickFromArgs xs =
     [] → error $ usageInfo usage options
     (n:_) → return n
 
-usage = "Usage: hach-client"
+usage = "Usage: hach-client [OPTIONS ...]"
