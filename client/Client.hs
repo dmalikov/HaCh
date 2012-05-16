@@ -2,9 +2,10 @@
 module Main (main) where
 
 import Control.Applicative ((<$>))
+import Control.Arrow ((&&&))
 import Control.Concurrent (forkIO)
 import Control.Exception
-import Control.Monad (forever)
+import Control.Monad (forever, liftM2)
 import Data.List (isPrefixOf)
 import Data.Time.Clock (getCurrentTime)
 import Data.Time.Format
@@ -38,31 +39,37 @@ printMessage (Message mtype nick (Text text)) = do
 
 main ∷ IO ()
 main = do
-  serverIP ← serverFromArgs =<< parseArgs =<< getArgs
-  putStrLn "Set your nick, please:"
-  nick ← getLine
-  putStrLn $ "Your nick is changed to \"" ++ nick ++ "\""
+  (serverIP, nick) ← (uncurry (liftM2 (,)) . (serverFromArgs &&& nickFromArgs)) =<< parseArgs =<< getArgs
+  putStrLn $ "Connected to " ++ serverIP
   withSocketsDo $
     do h ← connectTo serverIP $ PortNumber 7123
        hSetBuffering h LineBuffering
-       client (Nick nick) h
+       client nick h
 
 data Flag = ServerIP String
+          | ClientNick String
 
 options ∷ [OptDescr Flag]
 options =
-  [ Option "S" ["server"] (ReqArg ServerIP "server_ip") "set server ip adress"
+  [ Option "s" ["server"] (ReqArg ServerIP "server_ip") "set server ip adress"
+  , Option "n" ["nick"] (ReqArg ClientNick "user nickname") "set user nickname"
   ]
 
 parseArgs ∷ [String] → IO [Flag]
 parseArgs argv = case getOpt Permute options argv of
   (os, _, []) → return os
-  (_, _, es) → error $ concat es ++ usageInfo header options
-    where
-      header = "Usage: ./Client.hs [OPTIONS...]"
+  (_, _, es) → error $ concat es ++ usageInfo usage options
 
 serverFromArgs ∷ [Flag] → IO String
 serverFromArgs xs =
   case [ s | ServerIP s ← xs ] of
-    [] → error "serverIP undefined"
+    [] → error usage
     (s:_) → return s
+
+nickFromArgs ∷ [Flag] → IO Nick
+nickFromArgs xs =
+  case [ n | ClientNick n ← xs ] of
+    [] → error usage
+    (n:_) → return $ Nick n
+
+usage = "Usage: hach-client [OPTIONS...]"
