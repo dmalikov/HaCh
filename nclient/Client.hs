@@ -1,57 +1,29 @@
-{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE ViewPatterns #-}
 module Main (main) where
 
 import Control.Applicative ((<$>))
 import Control.Concurrent (forkIO, threadDelay)
-import Control.Concurrent.Chan (Chan, newChan, readChan, writeChan)
-import Control.Exception (SomeException, catch, handle)
-import Control.Monad (forever, void)
+import Control.Concurrent.Chan (Chan, readChan, writeChan)
+import Control.Monad (forever)
 import Data.Char (isSpace)
 import Data.Time.Clock (getCurrentTime)
 import Data.Time.Format (formatTime)
 import Graphics.Vty.Widgets.All
-import Network
-import Prelude hiding (catch)
+import Hach.Types
 import System.Environment (getArgs)
 import System.Exit (exitFailure, exitSuccess)
 import System.Locale (defaultTimeLocale)
-import System.IO (hFlush, hGetLine, hPrint, hPutStrLn, hSetBuffering, BufferMode(LineBuffering))
 import Text.Printf (printf)
 
-import Hach.Types
-
 import NClient.Args
-
-type Input = Chan S2C
-type Output = Chan C2S
+import NClient.Connect
 
 main ∷ IO ()
-main = do
-  (ip, nick) ← parseArgs =<< getArgs
-  i ← newChan
-  o ← newChan
-  initClient i o ip nick
-  gui i o
+main = getArgs >>= parseArgs >>= connect >>= gui
 
-initClient ∷ Input → Output → String → String → IO ()
-initClient i o ip nick = do
-  withSocketsDo . void $
-    do h ← connectTo ip $ PortNumber 7123
-       hSetBuffering h LineBuffering
-       hPrint h $ CSetNick nick
-       forkIO $ catch (inputThread h) $ \(_ ∷ SomeException) → do
-         writeChan i (SSystem "Server has closed the connection.")
-         exitFailure
-       forkIO $ catch (outputThread h) $ \(_ ∷ SomeException) → do
-         writeChan i (SSystem $ nick ++ " has left.")
-         exitSuccess
-  where inputThread h = forever $ hGetLine h >>= writeChan i . read
-        outputThread h = forever $ readChan o >>= \m → hPrint h m
-
-gui ∷ Input → Output → IO ()
-gui i o = do
+gui ∷ (Input, Output) → IO ()
+gui (i,o) = do
   messages ← newList (getNormalAttr defaultContext)
   newMessage ← editWidget
   box ← vBox messages newMessage
