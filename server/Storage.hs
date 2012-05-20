@@ -1,6 +1,6 @@
 {-# LANGUAGE UnicodeSyntax #-}
 
-module Hach.Storage
+module Storage
   ( Storage(..)
   , newStorage, getNick, putNick, delId
   , doesNickExist

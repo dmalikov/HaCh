@@ -1,6 +1,6 @@
 {-# LANGUAGE UnicodeSyntax #-}
 
-module Hach.Format where
+module Format where
 
 import Hach.Types
 

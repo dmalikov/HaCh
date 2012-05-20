@@ -15,7 +15,7 @@ import System.IO
 import System.Locale
 import Text.Printf (printf)
 
-import Hach.Format
+import Format
 import Hach.Types
 
 client ∷ Nick → Handle → IO ()

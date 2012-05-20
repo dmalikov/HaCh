@@ -11,7 +11,7 @@ import Data.Maybe (fromMaybe)
 import Network.Socket
 import System.IO
 
-import Hach.Storage
+import Storage
 import Hach.Types
 
 readC ∷ Storage → Chan (Int, S2C) → Handle → Int → IO ()

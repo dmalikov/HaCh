@@ -24,8 +24,6 @@ Library
   HS-Source-Dirs:       libhach
 
   Exposed-Modules:      Hach.Types
-                        Hach.Storage
-                        Hach.Format
 
   GHC-Options:          -Wall
 
