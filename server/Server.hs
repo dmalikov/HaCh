@@ -7,7 +7,7 @@ import Control.Applicative ((<$>))
 import Control.Exception
 import Control.Monad (forever, when)
 import Control.Concurrent
-import Data.Maybe (fromJust)
+import Data.Maybe (fromMaybe)
 import Network.Socket
 import System.IO
 
@@ -18,10 +18,19 @@ readC ∷ Storage → Chan (Int, S2C) → Handle → Int → IO ()
 readC storage ch h cId' = do
   (cId, message) ← readChan ch
   go message cId cId'
-  where go (SSetNick nick text) cId cId' = do
-          when (cId == cId') $ putNick storage cId text
+  where go message@(SSetNick nick text) cId cId' = do
+          nickExists ← isNickExists storage text
+          clientIdExists ← isClientIdExists storage cId
+          if nickExists
+            then when (cId == cId') $ hPrint h $ SSystem $ "nick " ++ text ++ " is already in use"
+            else do when (cId == cId') $ putNick storage cId text
+                    if clientIdExists
+                      then hPrint h $ SSystem $ nick ++ " is now known as " ++ text
+                      else hPrint h $ SSystem $ text ++ " is connected"
           showStorage storage
-        go message _ _ = hPrint h message
+        go message _ _ = do
+          hPrint h message
+          print message
 
 client ∷ Storage → Chan (Int, S2C) → Handle → Int → IO ()
 client storage ch h cId = do
@@ -29,9 +38,9 @@ client storage ch h cId = do
   forkIO $ handle_ $ forever $ readC storage ch' h cId
   forever $ do
     m ← hGetLine h
-    nick ← fromJust <$> getNick storage cId
+    nick ← fromMaybe "" <$> getNick storage cId
     writeChan ch' (cId, convertMessage nick $ read m)
-  where handle_ = handle $ \(SomeException _) → return ()
+  where handle_ = handle $ \(SomeException e) → print e
         convertMessage ∷ Nick → C2S → S2C
         convertMessage n (CMessage t) = SMessage n t
         convertMessage n (CAction t) = SAction n t

@@ -1,7 +1,10 @@
 {-# LANGUAGE UnicodeSyntax #-}
 
 module Hach.Storage
-  ( Storage(..), newStorage, getNick, putNick, delId, showStorage
+  ( Storage(..)
+  , newStorage, getNick, putNick, delId
+  , isClientIdExists, isNickExists
+  , showStorage
   ) where
 
 import Control.Applicative ((<$>))
@@ -26,6 +29,12 @@ putNick (Storage s) c n = modifyMVar_ s $ return . M.insert c n
 
 delId ∷ Storage → ClientId → IO ()
 delId (Storage s) c = modifyMVar_ s $ return . M.delete c
+
+isClientIdExists ∷ Storage → ClientId → IO Bool
+isClientIdExists (Storage s) c = M.member c <$> readMVar s
+
+isNickExists ∷ Storage → Nick → IO Bool
+isNickExists (Storage s) n = elem n <$> M.elems <$> readMVar s
 
 showStorage ∷ Storage → IO ()
 showStorage (Storage s) = print =<< readMVar s
