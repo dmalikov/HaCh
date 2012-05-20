@@ -19,16 +19,16 @@ import Hach.Format
 import Hach.Types
 
 client ∷ Nick → Handle → IO ()
-client nick@(Nick n) h = forkIO
+client nick h = forkIO
   (handle onDisconnect $ forever $ hGetLine h >>= printMessage . read) >>
-  (hPrint h . CSetNick $ Text n) >>
+  (hPrint h $ CSetNick nick) >>
   (handle onExit $ forever $ getLine >>= hPutStrLn h . processMessage >> hideOwnMessage)
     where processMessage t
-            | commandAction  `isPrefixOf` t = show . CAction . Text $ drop (length commandAction) t
-            | commandSetNick `isPrefixOf` t = show . CSetNick . Text $ drop (length commandSetNick) t
-            | otherwise = show $ CMessage $ Text t
+            | commandAction  `isPrefixOf` t = show . CAction $ drop (length commandAction) t
+            | commandSetNick `isPrefixOf` t = show . CSetNick $ drop (length commandSetNick) t
+            | otherwise = show $ CMessage t
           hideOwnMessage = putStrLn "\ESC[2A"
-          onExit (SomeException _) = putStrLn $ n ++" has left"
+          onExit (SomeException _) = putStrLn $ nick ++" has left"
           onDisconnect (SomeException _) = putStrLn "Server closed connection"
 
 printMessage ∷ S2C → IO ()
@@ -36,10 +36,10 @@ printMessage message = do
   timestamp ← formatTime defaultTimeLocale timeFormat <$> getCurrentTime
   printf (format message) timestamp (getText message)
   where getText ∷ S2C → String
-        getText (SMessage _ (Text text)) = text
-        getText (SAction  _ (Text text)) = text
-        getText (SSetNick _ (Text text)) = text
-        getText (SSystem    (Text text)) = text
+        getText (SMessage _ text) = text
+        getText (SAction  _ text) = text
+        getText (SSetNick _ text) = text
+        getText (SSystem    text) = text
 
 main ∷ IO ()
 main = do
@@ -48,7 +48,7 @@ main = do
   withSocketsDo $
     do h ← connectTo serverIP $ PortNumber 7123
        hSetBuffering h LineBuffering
-       client (Nick nick) h
+       client nick h
 
 data Flag = ServerIP String
           | ClientNick String

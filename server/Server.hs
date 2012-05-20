@@ -1,5 +1,6 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE UnicodeSyntax #-}
+
 module Main (main) where
 
 import Control.Applicative ((<$>))
@@ -17,8 +18,8 @@ readC ∷ Storage → Chan (Int, S2C) → Handle → Int → IO ()
 readC storage ch h cId' = do
   (cId, message) ← readChan ch
   go message cId cId'
-  where go (SSetNick (Nick nick) (Text text)) cId cId' = do
-          when (cId == cId') $ putNick storage cId (Nick text)
+  where go (SSetNick nick text) cId cId' = do
+          when (cId == cId') $ putNick storage cId text
           showStorage storage
         go message _ _ = hPrint h message
 
@@ -48,7 +49,7 @@ serve sock storage ch !cId = do
     onDisconnect ch' _ = do
       maybeNick ← getNick storage cId
       case maybeNick of
-        Just (Nick nick) → writeChan ch' (cId, SSystem $ Text $ nick ++ " has quit conversation")
+        Just nick → writeChan ch' (cId, SSystem $ nick ++ " has quit conversation")
         Nothing → putStrLn "Error: undefined user has quit conversation"
 
 main ∷ IO ()
