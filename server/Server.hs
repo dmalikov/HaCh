@@ -49,7 +49,10 @@ serve sock storage ch !cId = do
     onDisconnect ch' _ = do
       maybeNick ← getNick storage cId
       case maybeNick of
-        Just nick → writeChan ch' (cId, SSystem $ nick ++ " has quit conversation")
+        Just nick → do
+          writeChan ch' (cId, SSystem $ nick ++ " has quit conversation")
+          delId storage cId
+          showStorage storage
         Nothing → putStrLn "Error: undefined user has quit conversation"
 
 main ∷ IO ()

@@ -1,7 +1,7 @@
 {-# LANGUAGE UnicodeSyntax #-}
 
 module Hach.Storage
-  ( Storage(..), newStorage, getNick, putNick, showStorage
+  ( Storage(..), newStorage, getNick, putNick, delId, showStorage
   ) where
 
 import Control.Applicative ((<$>))
@@ -23,6 +23,9 @@ getNick (Storage s) c = M.lookup c <$> readMVar s
 
 putNick ∷ Storage → ClientId → Nick → IO ()
 putNick (Storage s) c n = modifyMVar_ s $ return . M.insert c n
+
+delId ∷ Storage → ClientId → IO ()
+delId (Storage s) c = modifyMVar_ s $ return . M.delete c
 
 showStorage ∷ Storage → IO ()
 showStorage (Storage s) = print =<< readMVar s
