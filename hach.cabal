@@ -34,7 +34,8 @@ Executable hach-client
   HS-Source-Dirs:       client, libhach
 
 Executable hach-nclient
-  Build-Depends:        vty-ui == 1.5
+  Build-Depends:        vty == 4.7.0.12,
+                        vty-ui == 1.5
   Main-is:              Client.hs
   HS-Source-Dirs:       nclient, libhach
 
