@@ -43,7 +43,7 @@ printMessage message = do
 
 main ∷ IO ()
 main = do
-  (serverIP : nick : _ ) ← parseArgs =<< getArgs
+  (serverIP, nick) ← parseArgs =<< getArgs
   putStrLn $ "Connected to " ++ serverIP
   withSocketsDo $
     do h ← connectTo serverIP $ PortNumber 7123
@@ -59,24 +59,13 @@ options =
   , Option "n" ["nick"] (ReqArg ClientNick "user nickname") "set user nickname"
   ]
 
-parseArgs ∷ [String] → IO [String]
+parseArgs ∷ [String] → IO (String, String)
 parseArgs argv = case getOpt Permute options argv of
   (os, _, []) → do
-    serverOpt ← serverFromArgs os
-    nickOpt ← nickFromArgs os
-    return [serverOpt, nickOpt]
+    let ips = [ s | ServerIP s ← os ]
+    let nicks = [ n | ClientNick n ← os ]
+    case (ips, nicks) of
+      ([ip], [nick]) → return (ip, nick)
+      (_, _) → error $ usageInfo usage options
   (_, _, es) → error $ concat es ++ usageInfo usage options
-
-serverFromArgs ∷ [Flag] → IO String
-serverFromArgs xs =
-  case [ s | ServerIP s ← xs ] of
-    [] → error $ usageInfo usage options
-    (s:_) → return s
-
-nickFromArgs ∷ [Flag] → IO String
-nickFromArgs xs =
-  case [ n | ClientNick n ← xs ] of
-    [] → error $ usageInfo usage options
-    (n:_) → return n
-
-usage = "Usage: hach-client [OPTIONS ...]"
+  where usage = "Usage: hach-client [OPTIONS...]"
