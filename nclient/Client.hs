@@ -62,7 +62,8 @@ gui i o = do
   addToCollection c ui fg
   newMessage `onActivate` \this → do
     t ← getEditText this
-    writeChan o $ toC2S (init t)
+    m ← toC2S (init t)
+    writeChan o m
     setEditText this " "
   forkIO . forever $ do
     m ← readChan i
@@ -73,10 +74,11 @@ gui i o = do
     threadDelay 100000
   runUi c defaultContext
 
-toC2S ∷ String → C2S
-toC2S (break isSpace → ("/nick", t)) = CSetNick t
-toC2S (break isSpace → ("/me", t)) = CAction t
-toC2S t = CMessage t
+toC2S ∷ String → IO C2S
+toC2S (break isSpace → ("/exit", t)) = exitSuccess
+toC2S (break isSpace → ("/nick", t)) = return $ CSetNick t
+toC2S (break isSpace → ("/me", t)) = return $ CAction t
+toC2S t = return $ CMessage t
 
 formatted ∷ String → S2C → String
 formatted t m = printf (fmt m) t (text m)
