@@ -2,32 +2,41 @@
 {-# LANGUAGE UnicodeSyntax #-}
 module Main (main) where
 
+import Control.Applicative ((<$>))
 import Control.Exception
 import Control.Monad (forever, when)
 import Control.Concurrent
+import Data.Maybe (fromJust)
 import Network.Socket
 import System.IO
 
 import Hach.Storage
 import Hach.Types
 
-readC ∷ Storage → Chan (Int, Message) → Handle → Int → IO ()
+readC ∷ Storage → Chan (Int, S2C) → Handle → Int → IO ()
 readC storage ch h cId' = do
-  (cId, m@(Message mType _ (Text text))) ← readChan ch
-  case mType of
-    SetNick → when (cId == cId') $ putNick storage cId (Nick text) >> showStorage storage
-    _       → hPrint h m
+  (cId, message) ← readChan ch
+  go message cId cId'
+  where go (SSetNick (Nick nick) (Text text)) cId cId' = do
+          when (cId == cId') $ putNick storage cId (Nick text)
+          showStorage storage
+        go message _ _ = hPrint h message
 
-client ∷ Storage → Chan (Int, Message) → Handle → Int → IO ()
+client ∷ Storage → Chan (Int, S2C) → Handle → Int → IO ()
 client storage ch h cId = do
   ch' ← dupChan ch
   forkIO $ handle_ $ forever $ readC storage ch' h cId
   forever $ do
     m ← hGetLine h
-    writeChan ch' (cId, read m)
+    nick ← fromJust <$> getNick storage cId
+    writeChan ch' (cId, convertMessage nick $ read m)
   where handle_ = handle $ \(SomeException _) → return ()
+        convertMessage ∷ Nick → C2S → S2C
+        convertMessage n (CMessage t) = SMessage n t
+        convertMessage n (CAction t) = SAction n t
+        convertMessage n (CSetNick t) = SSetNick n t
 
-serve ∷ Socket → Storage → Chan (Int, Message) → Int → IO ()
+serve ∷ Socket → Storage → Chan (Int, S2C) → Int → IO ()
 serve sock storage ch !cId = do
   (s, _) ← accept sock
   h ← socketToHandle s ReadWriteMode
@@ -35,11 +44,11 @@ serve sock storage ch !cId = do
   forkIO $ handle (onDisconnect ch) $ client storage ch h cId
   serve sock storage ch $ cId + 1
   where 
-    onDisconnect ∷ Chan (Int, Message) → SomeException → IO ()
+    onDisconnect ∷ Chan (Int, S2C) → SomeException → IO ()
     onDisconnect ch' _ = do
       maybeNick ← getNick storage cId
       case maybeNick of
-        Just nick → writeChan ch' (cId, Message System nick (Text "has quit conversation"))
+        Just (Nick nick) → writeChan ch' (cId, SSystem $ Text $ nick ++ " has quit conversation")
         Nothing → putStrLn "Error: undefined user has quit conversation"
 
 main ∷ IO ()

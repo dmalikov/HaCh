@@ -21,20 +21,25 @@ import Hach.Types
 client ∷ Nick → Handle → IO ()
 client nick@(Nick n) h = forkIO
   (handle onDisconnect $ forever $ hGetLine h >>= printMessage . read) >>
-  (hPrint h . Message SetNick nick $ Text n) >>
+  (hPrint h . CSetNick $ Text n) >>
   (handle onExit $ forever $ getLine >>= hPutStrLn h . processMessage >> hideOwnMessage)
-    where
-      processMessage text | commandAction  `isPrefixOf` text = show $ Message Action  nick $ Text $ drop (length commandAction)  text
-                          | commandSetNick `isPrefixOf` text = show $ Message SetNick nick $ Text $ drop (length commandSetNick) text
-                          | otherwise = show $ Message Plain nick $ Text text
-      hideOwnMessage = putStrLn "\ESC[2A"
-      onExit (SomeException _) = putStrLn $ n ++" has left"
-      onDisconnect (SomeException _) = putStrLn "Server closed connection"
+    where processMessage t
+            | commandAction  `isPrefixOf` t = show . CAction . Text $ drop (length commandAction) t
+            | commandSetNick `isPrefixOf` t = show . CSetNick . Text $ drop (length commandSetNick) t
+            | otherwise = show $ CMessage $ Text t
+          hideOwnMessage = putStrLn "\ESC[2A"
+          onExit (SomeException _) = putStrLn $ n ++" has left"
+          onDisconnect (SomeException _) = putStrLn "Server closed connection"
 
-printMessage ∷ Message → IO ()
-printMessage (Message mtype nick (Text text)) = do
+printMessage ∷ S2C → IO ()
+printMessage message = do
   timestamp ← formatTime defaultTimeLocale timeFormat <$> getCurrentTime
-  printf (format (mtype, nick)) timestamp text
+  printf (format message) timestamp (getText message)
+  where getText ∷ S2C → String
+        getText (SMessage _ (Text text)) = text
+        getText (SAction  _ (Text text)) = text
+        getText (SSetNick _ (Text text)) = text
+        getText (SSystem    (Text text)) = text
 
 main ∷ IO ()
 main = do
