@@ -56,13 +56,7 @@ toC2S t = return $ CMessage t
 
 formatted ∷ String → S2C → String
 formatted t m = printf (fmt m) t (text m)
-  where text ∷ S2C → String
-        text (SMessage _ t) = t
-        text (SAction _ t) = t
-        text (SSetNick _ t) = t
-        text (SSystem t) = t
-
-        fmt ∷ S2C → String
+  where fmt ∷ S2C → String
         fmt (SMessage n _) = "[%s] <" ++ n ++ ">: %s\n"
         fmt (SAction n _) = "[%s] *" ++ n ++ " %s\n"
         fmt (SSetNick n _) = "[%s] "  ++ n ++ " %s\n"
