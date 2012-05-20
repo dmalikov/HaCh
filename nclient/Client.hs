@@ -70,7 +70,9 @@ gui i o = do
     let fmt = "%H:%M:%S"
     t ← formatTime defaultTimeLocale fmt <$> getCurrentTime
     let s = formatted t m
-    schedule $ addToList messages s =<< plainText s
+    schedule $ do
+      addToList messages s =<< plainText s
+      scrollDown messages
     threadDelay 100000
   runUi c defaultContext
 
