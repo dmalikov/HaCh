@@ -17,20 +17,7 @@ import Hach.Types
 readC ∷ Storage → Chan (Int, S2C) → Handle → Int → IO ()
 readC storage ch h cId' = do
   (cId, message) ← readChan ch
-  go message cId cId'
-  where go message@(SSetNick nick text) cId cId' = do
-          nickExists ← isNickExists storage text
-          clientIdExists ← isClientIdExists storage cId
-          if nickExists
-            then when (cId == cId') $ hPrint h $ SSystem $ "nick " ++ text ++ " is already in use"
-            else do when (cId == cId') $ putNick storage cId text
-                    if clientIdExists
-                      then hPrint h $ SSystem $ nick ++ " is now known as " ++ text
-                      else hPrint h $ SSystem $ text ++ " is connected"
-          showStorage storage
-        go message _ _ = do
-          hPrint h message
-          print message
+  hPrint h message
 
 client ∷ Storage → Chan (Int, S2C) → Handle → Int → IO ()
 client storage ch h cId = do
@@ -38,13 +25,28 @@ client storage ch h cId = do
   forkIO $ handle_ $ forever $ readC storage ch' h cId
   forever $ do
     m ← hGetLine h
-    nick ← fromMaybe "" <$> getNick storage cId
-    writeChan ch' (cId, convertMessage nick $ read m)
+    maybeNick ← getNick storage cId
+    case maybeNick of
+      Just nick → go nick $ read m
+        where go ∷ Nick → C2S → IO ()
+              go n m@(CMessage text) = writeChan ch' (cId, SMessage n text)
+              go n m@(CAction text) = writeChan ch' (cId, SAction n text)
+              go n m@(CSetNick text) = do
+                nickExists ← doesNickExist storage text
+                if nickExists
+                  then hPrint h $ SSystem $ "nick " ++ text ++ " is already in use"
+                  else do writeChan ch' (cId, SSetNick nick ("is known as " ++ text))
+                          putNick storage cId text
+      Nothing → do writeChan ch' (cId, SSystem $ nick ++ " is connected")
+                   putNick storage cId nick
+                   showStorage storage
+                   where nick = text (read m ∷ C2S)
   where handle_ = handle $ \(SomeException e) → print e
         convertMessage ∷ Nick → C2S → S2C
         convertMessage n (CMessage t) = SMessage n t
         convertMessage n (CAction t) = SAction n t
         convertMessage n (CSetNick t) = SSetNick n t
+
 
 serve ∷ Socket → Storage → Chan (Int, S2C) → Int → IO ()
 serve sock storage ch !cId = do
