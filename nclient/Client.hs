@@ -42,17 +42,17 @@ initClient i o ip nick = do
        hSetBuffering h LineBuffering
        hPrint h $ CSetNick nick
        forkIO $ catch (inputThread h) $ \(_ ∷ SomeException) → do
-         putStrLn "Server has closed the connection."
+         writeChan i (SSystem "Server has closed the connection.")
          exitFailure
        forkIO $ catch (outputThread h) $ \(_ ∷ SomeException) → do
-         putStrLn $ nick ++ " has left."
+         writeChan i (SSystem $ nick ++ " has left.")
          exitSuccess
   where inputThread h = forever $ hGetLine h >>= writeChan i . read
         outputThread h = forever $ readChan o >>= \m → hPrint h m
 
 gui ∷ Input → Output → IO ()
 gui i o = do
-  messages ← plainText ""
+  messages ← newList (getNormalAttr defaultContext)
   newMessage ← editWidget
   box ← vBox messages newMessage
   ui ← centered box
@@ -68,7 +68,8 @@ gui i o = do
     m ← readChan i
     let fmt = "%H:%M:%S"
     t ← formatTime defaultTimeLocale fmt <$> getCurrentTime
-    schedule $ setText messages (formatted t m)
+    let s = formatted t m
+    schedule $ addToList messages s =<< plainText s
     threadDelay 100000
   runUi c defaultContext
 
