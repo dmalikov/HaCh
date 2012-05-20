@@ -23,8 +23,8 @@ import Hach.Types
 
 import NClient.Args
 
-type Input = Chan String
-type Output = Chan String
+type Input = Chan C2S
+type Output = Chan C2S
 
 main ∷ IO ()
 main = do
@@ -32,9 +32,7 @@ main = do
   i ← newChan
   o ← newChan
   initClient i o ip nick
-  writeChan o . show $ CMessage "EBLO"
-  forever $ return ()
-  --gui i o
+  gui i o
 
 initClient ∷ Input → Output → String → String → IO ()
 initClient i o ip nick = do
@@ -49,7 +47,7 @@ initClient i o ip nick = do
          putStrLn $ nick ++ " has left."
          exitSuccess
   where inputThread h = forever $ hGetLine h >>= writeChan i . read
-        outputThread h = forever $ readChan o >>= \m → print m >> hPrint h m
+        outputThread h = forever $ readChan o >>= \m → hPrint h m
 
 gui ∷ Input → Output → IO ()
 gui i o = do
@@ -63,6 +61,6 @@ gui i o = do
   addToCollection c ui fg
   newMessage `onActivate` \this → do
     t ← getEditText this
-    writeChan o . show $ CMessage t
+    writeChan o $ CMessage (init t)
     setEditText this " "
   runUi c defaultContext
