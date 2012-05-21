@@ -40,3 +40,7 @@ Executable hach-nclient
 Executable hach-server
   Main-is:              Server.hs
   HS-Source-Dirs:       server, libhach
+
+Source-repository head
+  type: git
+  location: https://github.com/dmalikov/HaCh

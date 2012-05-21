@@ -14,7 +14,9 @@ It uses [`Chan`s]() via sockets for message broadcasting and [vty](http://hackag
 ## What it was written for? ##
 It was written as an example of solving the following specification:
 
-    Write a command-line program to send a message from one client to another using the server. The client should be able to send messages with some specific code, server should resend these messages like a messages from a third person.
+    Write a command-line program to send a message from one client to another
+    using the server. The client should be able to send messages with some specific
+    code, server should resend these messages like a messages from a third person.
 
 ## How to install? ##
 
