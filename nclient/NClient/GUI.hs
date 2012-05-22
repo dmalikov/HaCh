@@ -1,11 +1,14 @@
 {-# LANGUAGE UnicodeSyntax #-}
 module NClient.GUI (gui) where
 
+import Control.Applicative ((<$>))
 import Control.Concurrent (forkIO, threadDelay)
-import Control.Concurrent.Chan (Chan, readChan, writeChan)
-import Control.Monad (forever)
-import Graphics.Vty.Attributes
+import Control.Concurrent.Chan (readChan, writeChan)
+import Control.Monad (forever, forM_, void)
+import Data.List.Split (splitEvery)
 import Graphics.Vty.Widgets.All
+import Graphics.Vty.Attributes
+import Graphics.Vty.DisplayRegion
 import Hach.Types
 
 import NClient.Connect
@@ -18,14 +21,15 @@ gui (i,o) = do
   box ← vBox messages newMessage
   ui ← centered box
   fg ← newFocusGroup
-  addToFocusGroup fg newMessage
+  void $ addToFocusGroup fg newMessage
   c ← newCollection
-  addToCollection c ui fg
+  void $ addToCollection c ui fg
   newMessage `onActivate` \this →
     getEditText this >>= toC2S >>= writeChan o >> setEditText this " "
-  forkIO . forever $ readChan i >>= \m → fromS2C m >>= \s → do
+  void $ forkIO . forever $ readChan i >>= \m → fromS2C m >>= \s → do
     schedule $ do
-      addToList messages s =<< plainTextWidget m s
+      size ← fromIntegral . region_width <$> getCurrentSize messages
+      forM_ (splitEvery size s) $ \γ → plainTextWidget m γ >>= addToList messages γ
       scrollDown messages
     threadDelay 100000
   runUi c defaultContext
