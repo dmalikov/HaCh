@@ -1,6 +1,6 @@
 {-# LANGUAGE UnicodeSyntax #-}
 
-module Format where
+module Client.Format where
 
 import Hach.Types
 
