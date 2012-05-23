@@ -29,9 +29,8 @@ gui (i,o) = do
   void $ forkIO . forever $ readChan i >>= \m → fromS2C m >>= \s → do
     schedule $ do
       size ← region_width <$> getCurrentSize messages
-      forM_ (S.simple size s) $ \γ → plainTextWidget m γ >>= addToList messages γ
-      scrollDown messages
-    threadDelay 100000
+      forM_ (S.simple size s) $ \γ → plainTextWidget m γ >>= addToList messages γ >> scrollDown messages
+    threadDelay 10000
   runUi c defaultContext
 
 colors ∷ S2C → Attr
