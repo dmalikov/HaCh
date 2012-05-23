@@ -6,12 +6,11 @@ import Control.Concurrent (forkIO, threadDelay)
 import Control.Concurrent.Chan (readChan, writeChan)
 import Control.Monad (forever, forM_, void)
 import Graphics.Vty.Widgets.All
-import Graphics.Vty.Attributes
 import Graphics.Vty.DisplayRegion
 import Hach.Types
 
 import NClient.Connect
-import NClient.Format
+import NClient.Message.Format
 import NClient.Message.Split as S
 
 gui ∷ (Input, Output) → IO ()
@@ -33,11 +32,3 @@ gui (i,o) = do
     threadDelay 10000
   runUi c defaultContext
 
-colors ∷ S2C → Attr
-colors (SAction _ _) = Attr Default (SetTo green) Default
-colors (SSetNick _ _) = Attr Default (SetTo yellow) Default
-colors (SSystem _) = Attr Default (SetTo blue) Default
-colors _ = getNormalAttr defaultContext
-
-plainTextWidget ∷ S2C → String → IO (Widget FormattedText)
-plainTextWidget m s = plainTextWithAttrs [(s, colors m)]

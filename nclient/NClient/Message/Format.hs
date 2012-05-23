@@ -1,12 +1,19 @@
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE ViewPatterns #-}
-module NClient.Format (fromS2C, toC2S) where
+module NClient.Message.Format
+  ( fromS2C, toC2S
+  , colors
+  , plainTextWidget
+  ) where
 
 import Control.Applicative ((<$>))
 import Control.Arrow (second)
 import Data.Char (isSpace)
 import Data.Time.Clock (getCurrentTime)
 import Data.Time.Format (formatTime)
+import Graphics.Vty.Attributes
+import Graphics.Vty.Widgets.Core
+import Graphics.Vty.Widgets.Text
 import Hach.Types
 import System.Exit (exitSuccess)
 import System.Locale (defaultTimeLocale)
@@ -30,3 +37,11 @@ toC2S t = return . CMessage . reverse . drop 1 . reverse $ t
 format = second (reverse . dropSpaces . reverse . dropSpaces) . break isSpace . dropSpaces
   where dropSpaces = dropWhile isSpace
 
+colors ∷ S2C → Attr
+colors (SAction _ _) = Attr Default (SetTo green) Default
+colors (SSetNick _ _) = Attr Default (SetTo yellow) Default
+colors (SSystem _) = Attr Default (SetTo blue) Default
+colors _ = getNormalAttr defaultContext
+
+plainTextWidget ∷ S2C → String → IO (Widget FormattedText)
+plainTextWidget m s = plainTextWithAttrs [(s, colors m)]
