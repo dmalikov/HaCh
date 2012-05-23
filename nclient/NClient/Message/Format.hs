@@ -2,8 +2,7 @@
 {-# LANGUAGE ViewPatterns #-}
 module NClient.Message.Format
   ( fromS2C, toC2S
-  , colors
-  , plainTextWidget
+  , Format(..), formatter
   ) where
 
 import Control.Applicative ((<$>))
@@ -12,12 +11,13 @@ import Data.Char (isSpace)
 import Data.Time.Clock (getCurrentTime)
 import Data.Time.Format (formatTime)
 import Graphics.Vty.Attributes
-import Graphics.Vty.Widgets.Core
 import Graphics.Vty.Widgets.Text
+import Graphics.Vty.Widgets.Util
 import Hach.Types
 import System.Exit (exitSuccess)
 import System.Locale (defaultTimeLocale)
 import Text.Printf (printf)
+import Text.Trans.Tokenize
 
 fromS2C ∷ S2C → IO String
 fromS2C m = formatMessage . formatTime defaultTimeLocale timeFormat <$> getCurrentTime
@@ -37,11 +37,23 @@ toC2S t = return . CMessage . reverse . drop 1 . reverse $ t
 format = second (reverse . dropSpaces . reverse . dropSpaces) . break isSpace . dropSpaces
   where dropSpaces = dropWhile isSpace
 
-colors ∷ S2C → Attr
-colors (SAction _ _) = Attr Default (SetTo green) Default
-colors (SSetNick _ _) = Attr Default (SetTo yellow) Default
-colors (SSystem _) = Attr Default (SetTo blue) Default
-colors _ = getNormalAttr defaultContext
+data Format = Full | Tail
 
-plainTextWidget ∷ S2C → String → IO (Widget FormattedText)
-plainTextWidget m s = plainTextWithAttrs [(s, colors m)]
+formatter ∷ Format → S2C → Formatter
+formatter f s2c = case f of
+  Full → Formatter $ \_ → return . colorizeStream
+  Tail → Formatter $ \_ → return . colorizeStreamTail
+  where colorizeStream = TS . map colorizeStreamEntity . streamEntities
+        colorizeStreamTail ts = let x:xs = streamEntities ts
+                                in TS $ x:map colorizeStreamEntity xs
+        colorizeStreamEntity (T token) = T $ colorizeToken token
+        colorizeStreamEntity NL = NL
+        colorizeToken ws@(WS {}) = ws
+        colorizeToken s = s {tokenAttr = attr}
+
+        attr ∷ Attr
+        attr = case s2c of
+          (SAction {}) → fgColor green
+          (SSetNick {}) → fgColor yellow
+          (SSystem {}) → fgColor blue
+          _ → def_attr

@@ -7,7 +7,6 @@ import Control.Concurrent.Chan (readChan, writeChan)
 import Control.Monad (forever, forM_, void)
 import Graphics.Vty.Widgets.All
 import Graphics.Vty.DisplayRegion
-import Hach.Types
 
 import NClient.Connect
 import NClient.Message.Format
@@ -27,8 +26,9 @@ gui (i,o) = do
     getEditText this >>= toC2S >>= writeChan o >> setEditText this " "
   void $ forkIO . forever $ readChan i >>= \m → fromS2C m >>= \s → do
     schedule $ do
-      size ← region_width <$> getCurrentSize messages
-      forM_ (S.simple size s) $ \γ → plainTextWidget m γ >>= addToList messages γ >> scrollDown messages
+      a:as ← S.words s . region_width <$> getCurrentSize messages
+      addMessage (formatter Tail m) a messages
+      forM_ as $ \γ → addMessage (formatter Full m) γ messages
     threadDelay 10000
   runUi c defaultContext
-
+  where addMessage f xs ys = textWidget f xs >>= addToList ys xs >> scrollDown ys

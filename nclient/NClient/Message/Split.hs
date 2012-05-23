@@ -6,15 +6,15 @@ import Data.List (intercalate)
 import Prelude hiding (words)
 import qualified Prelude
 
-simple ∷ Integral α ⇒ α → String → [String]
-simple (fromIntegral → n) = go
+simple ∷ Integral α ⇒ String → α → [String]
+simple m (fromIntegral → n) = go m
   where go xs
           | length xs < n = [xs]
           | otherwise = let (a,b) = splitAt n xs
                         in a : go b
 
-words ∷ Integral α ⇒ α → String → [String]
-words (fromIntegral → n) = map (intercalate " " . reverse) . go [] . Prelude.words
+words ∷ Integral α ⇒ String → α → [String]
+words m (fromIntegral → n) = map (intercalate " " . reverse) . go [] $ Prelude.words m
   where go ∷ [String] → [String] → [[String]]
         go [] [] = []
         go [] (x:xs)
