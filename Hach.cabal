@@ -50,7 +50,9 @@ Executable hach-nclient
 Executable hach-server
   Main-is:              Server.hs
   HS-Source-Dirs:       server, libhach
-  Other-modules:        Storage
+  Other-modules:        Server.Client
+                        Server.Message
+                        Server.Storage
 
 Source-repository head
   type: git
