@@ -3,50 +3,53 @@
 
 module Main (main) where
 
-import Control.Applicative ((<$>))
 import Control.Exception
-import Control.Monad (forever, when)
+import Control.Monad (forever)
 import Control.Concurrent
-import Data.Maybe (fromMaybe)
 import Network.Socket
 import System.IO
 
 import Storage
 import Hach.Types
 
-readC ∷ Storage → Chan (Int, S2C) → Handle → Int → IO ()
-readC storage ch h cId' = do
-  (cId, message) ← readChan ch
+readC ∷ Chan (Int, S2C) → Handle → IO ()
+readC ch h = do
+  (_, message) ← readChan ch
   hPrint h message
 
 client ∷ Storage → Chan (Int, S2C) → Handle → Int → IO ()
 client storage ch h cId = do
   ch' ← dupChan ch
-  forkIO $ handle_ $ forever $ readC storage ch' h cId
+  forkIO $ handle_ $ forever $ readC ch' h
   forever $ do
     m ← hGetLine h
     maybeNick ← getNick storage cId
     case maybeNick of
-      Just nick → go nick $ read m
+      Just nick → do
+        go nick $ read m
+        putStrLn m
         where go ∷ Nick → C2S → IO ()
-              go n m@(CMessage text) = writeChan ch' (cId, SMessage n text)
-              go n m@(CAction text) = writeChan ch' (cId, SAction n text)
-              go n m@(CSetNick text) = do
-                nickExists ← doesNickExist storage text
+              go n (CMessage t) = writeChan ch' (cId, SMessage n t)
+              go n (CAction t) = writeChan ch' (cId, SAction n t)
+              go _ (CSetNick t) = do
+                nickExists ← doesNickExist storage t
                 if nickExists
-                  then hPrint h $ SSystem $ "nick " ++ text ++ " is already in use"
-                  else do writeChan ch' (cId, SSetNick nick ("is known as " ++ text))
-                          putNick storage cId text
-      Nothing → do writeChan ch' (cId, SSystem $ nick ++ " is connected")
-                   putNick storage cId nick
-                   showStorage storage
-                   where nick = text (read m ∷ C2S)
+                  then hPrint h $ SSystem $ "nick " ++ t ++ " is already in use"
+                  else do writeChan ch' (cId, SSetNick nick ("is known as " ++ t))
+                          putNick storage cId t
+      Nothing → do
+        go $ read m
+        putStrLn m
+        where go ∷ C2S → IO ()
+              go (CMessage _) = hPrint h $ SSystem "Undefined client nick"
+              go (CAction  _) = hPrint h $ SSystem "Undefined client nick"
+              go (CSetNick t) = do
+                nickExists ← doesNickExist storage t
+                if nickExists
+                  then do hPrint h $ SSystem $  "nick " ++ t ++ " is already in use"
+                  else do writeChan ch' (cId, SSystem $ t ++ " is connected")
+                          putNick storage cId t
   where handle_ = handle $ \(SomeException e) → print e
-        convertMessage ∷ Nick → C2S → S2C
-        convertMessage n (CMessage t) = SMessage n t
-        convertMessage n (CAction t) = SAction n t
-        convertMessage n (CSetNick t) = SSetNick n t
-
 
 serve ∷ Socket → Storage → Chan (Int, S2C) → Int → IO ()
 serve sock storage ch !cId = do
