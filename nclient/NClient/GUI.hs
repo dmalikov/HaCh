@@ -31,15 +31,23 @@ gui (i,o) = do
   --
   -- Add send message to history
   newMessage `onActivate` \this →
-    getEditText this >>= \t → atomicModifyIORef history (\h → (H.prepend t h, ())) >> setEditText this " "
+    getEditText this >>= \t → atomicModifyIORef history (\h → let α = H.prepend t h in (α, H.line α)) >>= setEditText this
   --
   -- Catch history movements
   newMessage `onKeyPressed` \this k m →
-    let moveHistory f = atomicModifyIORef history (\h → let α = f h in (α, H.line α)) >>= setEditText this
-    in case (k,m) of
-         (KUp, []) → moveHistory H.next >> return True
-         (KDown, []) → moveHistory H.previous >> return True
-         _ → return False
+    case (k,m) of
+      (KUp, []) → do
+        t ← getEditText this
+        t' ← atomicModifyIORef history $
+          \h → let h' = H.next t h in (h', H.line h')
+        setEditText this t'
+        return True
+      (KDown, []) → do
+        t' ← atomicModifyIORef history $
+          \h → let h' = H.previous h in (h', H.line h')
+        setEditText this t'
+        return True
+      _ → return False
   --
   -- Read server messages when they come
   void . forkIO . forever $ readChan i >>= \m → fromS2C m >>= \s → do
