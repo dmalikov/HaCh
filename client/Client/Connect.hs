@@ -28,17 +28,16 @@ processClient (serverIP, nick) = do
 client ∷ Nick → Handle → IO ()
 client nick h = forkIO
   (handle onDisconnect $ forever $ hGetLine h >>= printMessage . read) >>
-  (hPrint h $ CSetNick nick) >>
+  (hPrint h $ C2S nick CSetNick) >>
   (handle onExit $ forever $ getLine >>= hPutStrLn h . processMessage >> hideOwnMessage)
     where processMessage t
-            | commandAction  `isPrefixOf` t = show . CAction $ drop (length commandAction) t
-            | commandSetNick `isPrefixOf` t = show . CSetNick $ drop (length commandSetNick) t
-            | otherwise = show $ CMessage t
+            | commandAction  `isPrefixOf` t = show $ C2S (drop (length commandAction) t) CAction
+            | commandSetNick `isPrefixOf` t = show $ C2S (drop (length commandSetNick) t) CSetNick
+            | otherwise = show $ C2S t CPlain
           hideOwnMessage = putStrLn "\ESC[2A"
           onExit (SomeException _) = putStrLn $ nick ++" has left"
           onDisconnect (SomeException _) = putStrLn "Server closed connection"
 
 printMessage ∷ S2C → IO ()
-printMessage message = do
-  timestamp ← formatTime defaultTimeLocale timeFormat <$> getCurrentTime
-  printf (format message) timestamp (text message)
+printMessage message =
+  printf (format message) (formatTime defaultTimeLocale timeFormat (time message)) (text message)

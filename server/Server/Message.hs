@@ -3,17 +3,17 @@ module Server.Message where
 
 import Hach.Types
 
-connectedClientM ∷ Nick → S2C
-connectedClientM nick = SSystem $ nick ++ " is connected."
+connectedClientM ∷ Nick → Timestamp → S2C
+connectedClientM η = S2C (η ++ " is connected.") SSystem
 
-existedNickM ∷ Nick → S2C
-existedNickM nick = SSystem $ "Nickname " ++ nick ++ " is already in use."
+existedNickM ∷ Nick → Timestamp → S2C
+existedNickM η = S2C ("Nickname " ++ η ++ " is already in use.") SSystem
 
-leftClientM ∷ Nick → S2C
-leftClientM nick = SSystem $ nick ++ " has left conversation."
+leftClientM ∷  Nick → Timestamp → S2C
+leftClientM η = S2C (η ++ " has left conversation.") SSystem
 
-settedNickM ∷ Nick → Nick → S2C
-settedNickM nickFrom nickTo = SSetNick nickFrom $ "is know as " ++ nickTo ++ "."
+settedNickM ∷ Nick → Nick → Timestamp → S2C
+settedNickM nickFrom nickTo = S2C ("is know as " ++ nickTo ++ ".") (SSetNick nickFrom)
 
-undefinedNickM ∷ S2C
-undefinedNickM = SSystem "To join a chat please set another nick with /nick command."
+undefinedNickM ∷ Timestamp → S2C
+undefinedNickM = S2C "To join a chat please set another nick with /nick command." SSystem

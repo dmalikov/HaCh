@@ -6,6 +6,7 @@ module Main (main) where
 import Control.Exception
 import Control.Monad (forever)
 import Control.Concurrent
+import Data.Time.Clock (getCurrentTime)
 import Network.Socket
 import System.IO
 
@@ -25,9 +26,11 @@ serve sock storage ch !cId = do
     onDisconnect ∷ Chan (Int, S2C) → SomeException → IO ()
     onDisconnect ch' _ = do
       maybeNick ← getNick storage cId
+      τ ← getCurrentTime
       case maybeNick of
-        Just nick → do
-          writeChan ch' (cId, leftClientM nick)
+        Just η → do
+          τ ← getCurrentTime
+          writeChan ch' (cId, leftClientM η τ)
           delId storage cId
           showStorage storage
         Nothing → putStrLn "Error: undefined user has left conversation"
