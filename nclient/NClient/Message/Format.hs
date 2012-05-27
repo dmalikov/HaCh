@@ -1,5 +1,4 @@
 {-# LANGUAGE UnicodeSyntax #-}
-{-# LANGUAGE ViewPatterns #-}
 module NClient.Message.Format
   ( fromS2C, toC2S
   , Format(..), formatter
@@ -20,22 +19,20 @@ import Text.Printf (printf)
 import Text.Trans.Tokenize
 
 fromS2C ∷ S2C → String
-fromS2C m = do
-  printf (messageFormat m) (formatTime defaultTimeLocale timeFormat (time m)) (text m)
-  where timeFormat = "%H:%M:%S"
-        messageFormat (S2C _ (SPlain n) _) = "[%s] <" ++ n ++ ">: %s\n"
-        messageFormat (S2C _ (SAction n) _) = "[%s] *" ++ n ++ " %s\n"
-        messageFormat (S2C _ (SSetNick n) _) = "[%s] "  ++ n ++ " %s\n"
-        messageFormat (S2C _ SSystem _) = "[%s] ! %s\n"
+fromS2C m = printf (format $ messageType m) (formatTime defaultTimeLocale "%T" $ time m) (text m)
+  where format (SPlain n) = "[%s] <" ++ n ++ ">: %s\n"
+        format (SAction n) = "[%s] *" ++ n ++ " %s\n"
+        format (SSetNick n) = "[%s] "  ++ n ++ " %s\n"
+        format SSystem = "[%s] ! %s\n"
 
 toC2S ∷ String → IO C2S
-toC2S (format → ("/exit", _)) = exitSuccess
-toC2S (format → ("/nick", t)) = return $ C2S t CSetNick
-toC2S (format → ("/me", t)) = return $ C2S t CAction
-toC2S t = return $ C2S (reverse . drop 1 . reverse $ t) CPlain
-
-format = second (reverse . dropSpaces . reverse . dropSpaces) . break isSpace . dropSpaces
-  where dropSpaces = dropWhile isSpace
+toC2S m = case format m of
+  ("/exit", _) → exitSuccess
+  ("/nick", t) → return $ C2S t CSetNick
+  ("/me", t) → return $ C2S t CAction
+  _ → return $ C2S (reverse . drop 1 $ reverse m) CPlain
+  where format = second (reverse . dropSpaces . reverse . dropSpaces) . break isSpace . dropSpaces
+        dropSpaces = dropWhile isSpace
 
 data Format = Full | Tail
 
@@ -52,8 +49,8 @@ formatter f s2c = case f of
         colorizeToken s = s {tokenAttr = attr}
 
         attr ∷ Attr
-        attr = case s2c of
-          (SAction {}) → fgColor green
-          (S2C _ (SSetNick _) _) → fgColor yellow
-          (S2C _ SSystem _) → fgColor blue
+        attr = case messageType s2c of
+          SAction {} → fgColor green
+          SSetNick {} → fgColor yellow
+          SSystem {} → fgColor blue
           _ → def_attr

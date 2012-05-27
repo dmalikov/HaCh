@@ -50,10 +50,10 @@ gui (i,o) = do
       _ → return False
   --
   -- Read server messages when they come
-  void . forkIO . forever $ readChan i >>= \m → fromS2C m >>= \s → do
+  void . forkIO . forever $ readChan i >>= \m → do
     let addMessage f xs ys = textWidget f xs >>= addToList ys xs >> scrollDown ys
     schedule $
-      do a:as ← S.words s . region_width <$> getCurrentSize messages
+      do a:as ← S.words (fromS2C m) . region_width <$> getCurrentSize messages
          addMessage (formatter Tail m) a messages
          forM_ as $ \γ → addMessage (formatter Full m) γ messages
     threadDelay 10000
