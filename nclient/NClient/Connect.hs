@@ -6,6 +6,7 @@ import Control.Concurrent (forkIO)
 import Control.Concurrent.Chan (Chan, newChan, readChan, writeChan)
 import Control.Exception (SomeException, catch)
 import Control.Monad (forever, void)
+import Data.Time.Clock (getCurrentTime)
 import Hach.Types
 import Network
 import Prelude hiding (catch)
@@ -27,12 +28,13 @@ client ip nick i o = do
   withSocketsDo $
     do h ← connectTo ip $ PortNumber 7123
        hSetBuffering h LineBuffering
-       hPrint h $ CSetNick nick
+       τ ← getCurrentTime
+       hPrint h $ C2S nick CSetNick
        void $ forkIO $ catch (inputThread h) $ \(_ ∷ SomeException) → do
-         writeChan i (SSystem "Server has closed the connection.")
+         writeChan i (S2C "Server has closed the connection." SSystem τ)
          exitFailure
        void $ forkIO $ catch (outputThread h) $ \(_ ∷ SomeException) → do
-         writeChan i (SSystem $ nick ++ " has left.")
+         writeChan i (S2C (nick ++ " has left.") SSystem τ)
          exitSuccess
   where inputThread h = forever $ hGetLine h >>= writeChan i . read
         outputThread h = forever $ readChan o >>= \m → hPrint h m

@@ -19,20 +19,20 @@ import System.Locale (defaultTimeLocale)
 import Text.Printf (printf)
 import Text.Trans.Tokenize
 
-fromS2C ∷ S2C → IO String
-fromS2C m = formatMessage . formatTime defaultTimeLocale timeFormat <$> getCurrentTime
+fromS2C ∷ S2C → String
+fromS2C m = do
+  printf (messageFormat m) (formatTime defaultTimeLocale timeFormat (time m)) (text m)
   where timeFormat = "%H:%M:%S"
-        messageFormat (SMessage n _) = "[%s] <" ++ n ++ ">: %s\n"
-        messageFormat (SAction n _) = "[%s] *" ++ n ++ " %s\n"
-        messageFormat (SSetNick n _) = "[%s] "  ++ n ++ " %s\n"
-        messageFormat (SSystem _) = "[%s] ! %s\n"
-        formatMessage t = printf (messageFormat m) t (text m)
+        messageFormat (S2C _ (SPlain n) _) = "[%s] <" ++ n ++ ">: %s\n"
+        messageFormat (S2C _ (SAction n) _) = "[%s] *" ++ n ++ " %s\n"
+        messageFormat (S2C _ (SSetNick n) _) = "[%s] "  ++ n ++ " %s\n"
+        messageFormat (S2C _ SSystem _) = "[%s] ! %s\n"
 
 toC2S ∷ String → IO C2S
 toC2S (format → ("/exit", _)) = exitSuccess
-toC2S (format → ("/nick", t)) = return $ CSetNick t
-toC2S (format → ("/me", t)) = return $ CAction t
-toC2S t = return . CMessage . reverse . drop 1 . reverse $ t
+toC2S (format → ("/nick", t)) = return $ C2S t CSetNick
+toC2S (format → ("/me", t)) = return $ C2S t CAction
+toC2S t = return $ C2S (reverse . drop 1 . reverse $ t) CPlain
 
 format = second (reverse . dropSpaces . reverse . dropSpaces) . break isSpace . dropSpaces
   where dropSpaces = dropWhile isSpace
@@ -54,6 +54,6 @@ formatter f s2c = case f of
         attr ∷ Attr
         attr = case s2c of
           (SAction {}) → fgColor green
-          (SSetNick {}) → fgColor yellow
-          (SSystem {}) → fgColor blue
+          (S2C _ (SSetNick _) _) → fgColor yellow
+          (S2C _ SSystem _) → fgColor blue
           _ → def_attr
