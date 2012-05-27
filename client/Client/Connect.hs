@@ -2,12 +2,10 @@
 
 module Client.Connect (processClient) where
 
-import Control.Applicative ((<$>))
 import Control.Concurrent (forkIO)
 import Control.Exception
 import Control.Monad (forever)
 import Data.List (isPrefixOf)
-import Data.Time.Clock (getCurrentTime)
 import Data.Time.Format
 import Network
 import System.IO

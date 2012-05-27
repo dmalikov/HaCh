@@ -29,7 +29,6 @@ serve sock storage ch !cId = do
       τ ← getCurrentTime
       case maybeNick of
         Just η → do
-          τ ← getCurrentTime
           writeChan ch' (cId, leftClientM η τ)
           delId storage cId
           showStorage storage
