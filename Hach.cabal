@@ -20,8 +20,7 @@ Library
   Build-Depends:        base >= 3 && < 5,
                         containers,
                         old-locale,
-                        network,
-                        time
+                        network
 
   HS-Source-Dirs:       libhach
 
@@ -48,6 +47,7 @@ Executable hach-nclient
                         NClient.GUI
 
 Executable hach-server
+  Build-Depends:        time
   Main-is:              Server.hs
   HS-Source-Dirs:       server, libhach
   Other-modules:        Server.Client
