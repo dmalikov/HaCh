@@ -11,17 +11,18 @@ import Network.Socket
 import System.IO
 
 import Server.Client
+import Server.History
 import Server.Message
 import Server.Storage
 import Hach.Types
 
-serve ∷ Socket → Storage → Chan (Int, S2C) → Int → IO ()
-serve sock storage ch !cId = do
+serve ∷ Socket → History → Storage → Chan (Int, S2C) → Int → IO ()
+serve sock history storage ch !cId = do
   (s, _) ← accept sock
   h ← socketToHandle s ReadWriteMode
   hSetBuffering h LineBuffering
-  forkIO $ handle (onDisconnect ch) $ clientProcessing storage ch h cId
-  serve sock storage ch $ cId + 1
+  forkIO $ handle (onDisconnect ch) $ clientProcessing history storage ch h cId
+  serve sock history storage ch $ cId + 1
   where 
     onDisconnect ∷ Chan (Int, S2C) → SomeException → IO ()
     onDisconnect ch' _ = do
@@ -37,10 +38,11 @@ serve sock storage ch !cId = do
 main ∷ IO ()
 main = withSocketsDo $ do
   storage ← newStorage
+  history ← emptyHistory
   sock ← socket AF_INET Stream 0
   setSocketOption sock ReuseAddr 1
   bindSocket sock (SockAddrInet 7123 iNADDR_ANY)
   listen sock 1024
   ch ← newChan
   forkIO $ forever $ readChan ch >>= const (return ())
-  serve sock storage ch 0
+  serve sock history storage ch 0
