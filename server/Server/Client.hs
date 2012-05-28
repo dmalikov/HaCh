@@ -8,6 +8,8 @@ import Control.Monad (forever)
 import Data.Time.Clock (getCurrentTime)
 import System.IO
 
+import qualified Data.Traversable as DT
+
 import Hach.Types
 import Server.History
 import Server.Message
@@ -51,11 +53,10 @@ clientProcessing history storage ch h cId = do
                 nickExists ← doesNickExist storage η
                 if nickExists
                   then do hPrint h $ existedNickM η τ
-                  else do sendHistory h history
+                  else do DT.mapM (hPrint h) =<< getMessages history
                           writeChan ch' (cId, μ)
                           putMessage history μ
                           putNick storage cId η
                             where μ = connectedClientM η τ
               go (C2S _ _) = hPrint h $ undefinedNickM τ
   where handle_ = handle $ \(SomeException e) → print e
-        sendHistory h' history' = getMessages history' >>= mapM_ (hPrint h')

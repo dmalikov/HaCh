@@ -47,7 +47,7 @@ Executable hach-nclient
                         NClient.GUI
 
 Executable hach-server
-  Build-Depends:        dlist, time
+  Build-Depends:        time
   Main-is:              Server.hs
   HS-Source-Dirs:       server, libhach
   Other-modules:        Server.Client

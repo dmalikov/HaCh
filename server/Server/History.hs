@@ -7,17 +7,17 @@ module Server.History
 import Control.Applicative ((<$>))
 import Control.Concurrent.MVar
 
-import qualified Data.DList as DL
+import qualified Data.Sequence as S
 
 import Hach.Types
 
-newtype History = History (MVar (DL.DList S2C))
+newtype History = History (MVar (S.Seq S2C))
 
 emptyHistory ∷ IO History
-emptyHistory = History <$> newMVar DL.empty
+emptyHistory = History <$> newMVar S.empty
 
 putMessage ∷ History → S2C → IO ()
-putMessage (History α) μ = modifyMVar_ α (\h → return $ DL.append h $ DL.singleton μ)
+putMessage (History α) μ = modifyMVar_ α (\h → return $ h S.|> μ)
 
-getMessages ∷ History → IO [S2C]
-getMessages (History α) = DL.toList <$> readMVar α
+getMessages ∷ History → IO (S.Seq S2C)
+getMessages (History α) = readMVar α
