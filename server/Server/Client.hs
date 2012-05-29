@@ -53,7 +53,7 @@ clientProcessing history storage ch h cId = do
                 nickExists ← doesNickExist storage η
                 if nickExists
                   then do hPrint h $ existedNickM η τ
-                  else do DT.mapM (hPrint h) =<< getMessages history
+                  else do DT.mapM (hPrint h) =<< lastNMinutes 10 τ <$> getMessages history
                           writeChan ch' (cId, μ)
                           putMessage history μ
                           putNick storage cId η

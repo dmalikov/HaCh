@@ -1,11 +1,12 @@
 {-# LANGUAGE UnicodeSyntax #-}
 module Server.History
   ( History(..)
-  , emptyHistory, putMessage, getMessages
+  , emptyHistory, putMessage, getMessages, lastNMinutes
   ) where
 
 import Control.Applicative ((<$>))
 import Control.Concurrent.MVar
+import Data.Time
 
 import qualified Data.Sequence as S
 
@@ -21,3 +22,9 @@ putMessage (History α) μ = modifyMVar_ α (\h → return $ h S.|> μ)
 
 getMessages ∷ History → IO (S.Seq S2C)
 getMessages (History α) = readMVar α
+
+lastNMinutes ∷ Int → Timestamp → (S.Seq S2C) → (S.Seq S2C)
+lastNMinutes minutes currentTime = S.filter inLastMinutes
+  where inLastMinutes ∷ S2C → Bool
+        inLastMinutes μ = (diffUTCTime currentTime (time μ)) < tenMinutes
+          where tenMinutes = fromIntegral (60*minutes) ∷ NominalDiffTime
