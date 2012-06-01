@@ -6,7 +6,7 @@ module Server.History
 
 import Control.Applicative ((<$>))
 import Control.Concurrent.MVar
-import Data.Time
+import Data.Time.Clock (diffUTCTime, NominalDiffTime)
 
 import qualified Data.Sequence as S
 
@@ -23,8 +23,8 @@ putMessage (History α) μ = modifyMVar_ α (\h → return $ h S.|> μ)
 getMessages ∷ History → IO (S.Seq S2C)
 getMessages (History α) = readMVar α
 
-lastNMinutes ∷ Int → Timestamp → (S.Seq S2C) → (S.Seq S2C)
-lastNMinutes minutes currentTime = S.filter inLastMinutes
+lastNMinutes ∷ Int → Timestamp → S.Seq S2C → S.Seq S2C
+lastNMinutes minutes currentTime = S.takeWhileR inLastMinutes
   where inLastMinutes ∷ S2C → Bool
-        inLastMinutes μ = (diffUTCTime currentTime (time μ)) < tenMinutes
-          where tenMinutes = fromIntegral (60*minutes) ∷ NominalDiffTime
+        inLastMinutes μ = diffUTCTime currentTime (time μ) < nominalMinutes
+          where nominalMinutes = 60 * fromIntegral minutes ∷ NominalDiffTime
