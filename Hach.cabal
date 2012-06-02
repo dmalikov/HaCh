@@ -1,5 +1,5 @@
 Name:                   Hach
-Version:                0.0.1
+Version:                0.0.1.1
 Category:               Network
 Description:            Simple chat
 Synopsis:               Simple chat
@@ -35,7 +35,7 @@ Executable hach-client
   Other-modules:        Format
 
 Executable hach-nclient
-  Build-Depends:        vty == 4.7.0.12,
+  Build-Depends:        vty < 4.8,
                         vty-ui == 1.5
   Main-is:              Client.hs
   HS-Source-Dirs:       nclient, libhach
