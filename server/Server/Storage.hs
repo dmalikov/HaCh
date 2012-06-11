@@ -1,6 +1,6 @@
 {-# LANGUAGE UnicodeSyntax #-}
 
-module Storage
+module Server.Storage
   ( Storage(..)
   , newStorage, getNick, putNick, delId
   , doesNickExist

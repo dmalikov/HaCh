@@ -1,40 +1,61 @@
 {-# LANGUAGE UnicodeSyntax #-}
 module NClient.GUI (gui) where
 
+import Control.Applicative ((<$>))
 import Control.Concurrent (forkIO, threadDelay)
-import Control.Concurrent.Chan (Chan, readChan, writeChan)
-import Control.Monad (forever)
-import Graphics.Vty.Attributes
+import Control.Concurrent.Chan (readChan, writeChan)
+import Control.Monad (forever, forM_, void)
+import Data.IORef (newIORef, atomicModifyIORef)
+import Graphics.Vty
 import Graphics.Vty.Widgets.All
-import Hach.Types
 
 import NClient.Connect
-import NClient.Format
+import NClient.Message.Format
+import qualified NClient.Message.History as H
+import qualified NClient.Message.Split as S
 
 gui ∷ (Input, Output) → IO ()
 gui (i,o) = do
+  history ← newIORef $ H.empty 10
   messages ← newList (getNormalAttr defaultContext)
   newMessage ← editWidget
   box ← vBox messages newMessage
   ui ← centered box
   fg ← newFocusGroup
-  addToFocusGroup fg newMessage
+  void $ addToFocusGroup fg newMessage
   c ← newCollection
-  addToCollection c ui fg
+  void $ addToCollection c ui fg
+  -- Send message to server
   newMessage `onActivate` \this →
-    getEditText this >>= toC2S >>= writeChan o >> setEditText this " "
-  forkIO . forever $ readChan i >>= \m → fromS2C m >>= \s → do
-    schedule $ do
-      addToList messages s =<< plainTextWidget m s
-      scrollDown messages
-    threadDelay 100000
+    getEditText this >>= toC2S >>= writeChan o
+  --
+  -- Add send message to history
+  newMessage `onActivate` \this →
+    getEditText this >>= \t → atomicModifyIORef history (\h → let α = H.prepend t h in (α, H.line α)) >>= setEditText this
+  --
+  -- Catch history movements
+  newMessage `onKeyPressed` \this k m →
+    case (k,m) of
+      (KUp, []) → do
+        t ← getEditText this
+        t' ← atomicModifyIORef history $
+          \h → let h' = H.next t h in (h', H.line h')
+        setEditText this t'
+        return True
+      (KDown, []) → do
+        t' ← atomicModifyIORef history $
+          \h → let h' = H.previous h in (h', H.line h')
+        setEditText this t'
+        return True
+      _ → return False
+  --
+  -- Read server messages when they come
+  void . forkIO . forever $ readChan i >>= \m → do
+    let addMessage f xs ys = textWidget f xs >>= addToList ys xs >> scrollDown ys
+    schedule $
+      do a:as ← S.words (fromS2C m) . region_width <$> getCurrentSize messages
+         addMessage (formatter Tail m) a messages
+         forM_ as $ \γ → addMessage (formatter Full m) γ messages
+    threadDelay 10000
+  --
   runUi c defaultContext
-
-colors ∷ S2C → Attr
-colors (SAction _ _) = Attr Default (SetTo green) Default
-colors (SSetNick _ _) = Attr Default (SetTo yellow) Default
-colors (SSystem _) = Attr Default (SetTo blue) Default
-colors _ = getNormalAttr defaultContext
-
-plainTextWidget ∷ S2C → String → IO (Widget FormattedText)
-plainTextWidget m s = plainTextWithAttrs [(s, colors m)]

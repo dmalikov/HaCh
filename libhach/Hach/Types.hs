@@ -1,30 +1,30 @@
 {-# LANGUAGE UnicodeSyntax #-}
-module Hach.Types where
+module Hach.Types
+  ( Nick, Text, Timestamp
+  , CMessage(..), SMessage(..)
+  , C2S(..), S2C(..)
+  ) where
+
+import Data.Time
 
 type Nick = String
 type Text = String
+type Timestamp = UTCTime
 
-data S2C = SMessage Nick Text
-         | SAction Nick Text
-         | SSetNick Nick Text
-         | SSystem Text
-           deriving (Read, Show)
+data S2C = S2C { text ∷ Text
+               , messageType ∷ SMessage
+               , time ∷ Timestamp
+               } deriving (Read, Show)
 
-data C2S = CMessage Text
-         | CAction Text
-         | CSetNick Text
-           deriving (Read, Show)
+data SMessage = SPlain Nick
+              | SAction Nick
+              | SSetNick Nick
+              | SSystem
+                deriving (Read, Show)
 
-class Message α where
-  text ∷ α → String
+data C2S = C2S Text CMessage deriving (Read, Show)
 
-instance Message S2C where
-  text (SMessage _ τ) = τ
-  text (SAction _ τ) = τ
-  text (SSetNick _ τ) = τ
-  text (SSystem τ) = τ
-
-instance Message C2S where
-  text (CMessage τ) = τ
-  text (CAction τ) = τ
-  text (CSetNick τ) = τ
+data CMessage = CPlain
+              | CAction
+              | CSetNick
+                deriving (Read, Show)

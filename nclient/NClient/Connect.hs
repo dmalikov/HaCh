@@ -4,13 +4,13 @@ module NClient.Connect (connect, Input, Output) where
 
 import Control.Concurrent (forkIO)
 import Control.Concurrent.Chan (Chan, newChan, readChan, writeChan)
-import Control.Exception (SomeException, catch, handle)
+import Control.Exception (SomeException, catch)
 import Control.Monad (forever, void)
 import Hach.Types
 import Network
 import Prelude hiding (catch)
 import System.Exit (exitFailure, exitSuccess)
-import System.IO (hFlush, hGetLine, hPrint, hPutStrLn, hSetBuffering, BufferMode(LineBuffering))
+import System.IO (hGetLine, hPrint, hSetBuffering, BufferMode(LineBuffering))
 
 type Input = Chan S2C
 type Output = Chan C2S
@@ -24,15 +24,12 @@ connect (ip, nick) = do
 
 client ∷ String → String → Input → Output → IO ()
 client ip nick i o = do
-  withSocketsDo . void $
+  withSocketsDo $
     do h ← connectTo ip $ PortNumber 7123
        hSetBuffering h LineBuffering
-       hPrint h $ CSetNick nick
-       forkIO $ catch (inputThread h) $ \(_ ∷ SomeException) → do
-         writeChan i (SSystem "Server has closed the connection.")
-         exitFailure
-       forkIO $ catch (outputThread h) $ \(_ ∷ SomeException) → do
-         writeChan i (SSystem $ nick ++ " has left.")
-         exitSuccess
+       hPrint h $ C2S nick CSetNick
+       void $ do
+         forkIO $ catch (inputThread h) $ \(_ ∷ SomeException) → exitFailure
+         forkIO $ catch (outputThread h) $ \(_ ∷ SomeException) → exitSuccess
   where inputThread h = forever $ hGetLine h >>= writeChan i . read
         outputThread h = forever $ readChan o >>= \m → hPrint h m

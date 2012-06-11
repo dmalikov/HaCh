@@ -20,8 +20,7 @@ Library
   Build-Depends:        base >= 3 && < 5,
                         containers,
                         old-locale,
-                        network,
-                        time
+                        network
 
   HS-Source-Dirs:       libhach
 
@@ -32,7 +31,9 @@ Library
 Executable hach-client
   Main-is:              Client.hs
   HS-Source-Dirs:       client, libhach
-  Other-modules:        Format
+  Other-modules:        Client.Args,
+                        Client.Connect,
+                        Client.Format
 
 Executable hach-nclient
   Build-Depends:        vty < 4.8,
@@ -41,13 +42,18 @@ Executable hach-nclient
   HS-Source-Dirs:       nclient, libhach
   Other-modules:        NClient.Args,
                         NClient.Connect,
-                        NClient.Format,
+                        NClient.Message.Format,
+                        NClient.Message.Split,
                         NClient.GUI
 
 Executable hach-server
+  Build-Depends:        time
   Main-is:              Server.hs
   HS-Source-Dirs:       server, libhach
-  Other-modules:        Storage
+  Other-modules:        Server.Client
+                        Server.History
+                        Server.Message
+                        Server.Storage
 
 Source-repository head
   type: git
