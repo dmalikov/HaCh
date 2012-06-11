@@ -1,8 +1,8 @@
 Name:                   Hach
-Version:                0.0.1.1
+Version:                0.1.0
 Category:               Network
-Description:            Simple chat
 Synopsis:               Simple chat
+Description:            Simple example of chat application. Consists of 3 components: hach-server, hach-client (simple console client), hach-nclient (vty-ui client).
 
 License:                MIT
 License-file:           LICENSE
@@ -36,13 +36,14 @@ Executable hach-client
                         Client.Format
 
 Executable hach-nclient
-  Build-Depends:        vty < 4.8,
-                        vty-ui == 1.5
+  Build-Depends:        vty >= 4.7 && < 4.8,
+                        vty-ui >= 1.5 && < 1.6
   Main-is:              Client.hs
   HS-Source-Dirs:       nclient, libhach
   Other-modules:        NClient.Args,
                         NClient.Connect,
                         NClient.Message.Format,
+                        NClient.Message.History,
                         NClient.Message.Split,
                         NClient.GUI
 
