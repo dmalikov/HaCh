@@ -1,5 +1,7 @@
 # HaCh #
 
+[![Build Status](https://secure.travis-ci.org/dmalikov/HaCh.png?branch=master)](http://travis-ci.org/dmalikov/HaCh)
+
 ## What is it? ##
 **HaCh** is a simple **Ch**at written in **Ha**skell. It consists of 3 separate programs: 
 
