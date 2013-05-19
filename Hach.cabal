@@ -17,7 +17,7 @@ Cabal-version:          >= 1.6
 Homepage:               http://github.com/dmalikov/HaCh
 
 Library
-  Build-Depends:        base >= 3 && < 5,
+  Build-Depends:        base >= 3,
                         containers,
                         old-locale,
                         network
@@ -36,8 +36,8 @@ Executable hach-client
                         Client.Format
 
 Executable hach-nclient
-  Build-Depends:        vty >= 4.7 && < 4.8,
-                        vty-ui >= 1.5 && < 1.6
+  Build-Depends:        vty >= 4.7,
+                        vty-ui >= 1.5
   Main-is:              Client.hs
   HS-Source-Dirs:       nclient, libhach
   Other-modules:        NClient.Args,
