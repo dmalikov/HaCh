@@ -6,6 +6,7 @@ import Control.Concurrent (forkIO, threadDelay)
 import Control.Concurrent.Chan (readChan, writeChan)
 import Control.Monad (forever, forM_, void)
 import Data.IORef (newIORef, atomicModifyIORef)
+import Data.Text (pack, unpack)
 import Graphics.Vty
 import Graphics.Vty.Widgets.All
 
@@ -27,11 +28,11 @@ gui (i,o) = do
   void $ addToCollection c ui fg
   -- Send message to server
   newMessage `onActivate` \this →
-    getEditText this >>= toC2S >>= writeChan o
+    getEditText this >>= toC2S . unpack >>= writeChan o
   --
   -- Add send message to history
   newMessage `onActivate` \this →
-    getEditText this >>= \t → atomicModifyIORef history (\h → let α = H.prepend t h in (α, H.line α)) >>= setEditText this
+    getEditText this >>= \t → atomicModifyIORef history (\h → let α = H.prepend (unpack t) h in (α, H.line α)) >>= setEditText this . pack
   --
   -- Catch history movements
   newMessage `onKeyPressed` \this k m →
@@ -39,13 +40,13 @@ gui (i,o) = do
       (KUp, []) → do
         t ← getEditText this
         t' ← atomicModifyIORef history $
-          \h → let h' = H.next t h in (h', H.line h')
-        setEditText this t'
+          \h → let h' = H.next (unpack t) h in (h', H.line h')
+        setEditText this (pack t')
         return True
       (KDown, []) → do
         t' ← atomicModifyIORef history $
           \h → let h' = H.previous h in (h', H.line h')
-        setEditText this t'
+        setEditText this (pack t')
         return True
       _ → return False
   --
@@ -54,8 +55,8 @@ gui (i,o) = do
     let addMessage f xs ys = textWidget f xs >>= addToList ys xs >> scrollDown ys
     schedule $
       do a:as ← S.words (fromS2C m) . region_width <$> getCurrentSize messages
-         addMessage (formatter Tail m) a messages
-         forM_ as $ \γ → addMessage (formatter Full m) γ messages
+         addMessage (formatter Tail m) (pack a) messages
+         forM_ as $ \γ → addMessage (formatter Full m) (pack γ) messages
     threadDelay 10000
   --
   runUi c defaultContext

@@ -37,7 +37,8 @@ Executable hach-client
 
 Executable hach-nclient
   Build-Depends:        vty >= 4.7,
-                        vty-ui >= 1.5
+                        vty-ui >= 1.5,
+                        text
   Main-is:              Client.hs
   HS-Source-Dirs:       nclient, libhach
   Other-modules:        NClient.Args,

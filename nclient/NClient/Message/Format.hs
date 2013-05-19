@@ -4,10 +4,8 @@ module NClient.Message.Format
   , Format(..), formatter
   ) where
 
-import Control.Applicative ((<$>))
 import Control.Arrow (second)
 import Data.Char (isSpace)
-import Data.Time.Clock (getCurrentTime)
 import Data.Time.Format (formatTime)
 import Graphics.Vty.Attributes
 import Graphics.Vty.Widgets.Text

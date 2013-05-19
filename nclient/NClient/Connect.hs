@@ -8,7 +8,6 @@ import Control.Exception (SomeException, catch)
 import Control.Monad (forever, void)
 import Hach.Types
 import Network
-import Prelude hiding (catch)
 import System.Exit (exitFailure, exitSuccess)
 import System.IO (hGetLine, hPrint, hSetBuffering, BufferMode(LineBuffering))
 

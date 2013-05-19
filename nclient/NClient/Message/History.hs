@@ -26,7 +26,7 @@ next ∷ String → History → History
 next t = tryNext . trySetCurrent t
 
 tryNext ∷ History → History
-tryNext h@(History ls i c)
+tryNext h@(History ls i _)
   | i == Seq.length ls - 1 = h
   | otherwise = h { current = succ i }
 
