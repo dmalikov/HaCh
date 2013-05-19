@@ -1,4 +1,3 @@
-{-# LANGUAGE UnicodeSyntax #-}
 module Main (main) where
 
 import System.Environment (getArgs)
@@ -6,5 +5,5 @@ import System.Environment (getArgs)
 import Client.Args
 import Client.Connect
 
-main ∷ IO ()
+main :: IO ()
 main = getArgs >>= parseArgs >>= processClient

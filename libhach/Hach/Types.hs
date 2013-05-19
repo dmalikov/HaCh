@@ -1,4 +1,3 @@
-{-# LANGUAGE UnicodeSyntax #-}
 module Hach.Types
   ( Nick, Text, Timestamp
   , CMessage(..), SMessage(..)
@@ -11,9 +10,9 @@ type Nick = String
 type Text = String
 type Timestamp = UTCTime
 
-data S2C = S2C { text ∷ Text
-               , messageType ∷ SMessage
-               , time ∷ Timestamp
+data S2C = S2C { text :: Text
+               , messageType :: SMessage
+               , time :: Timestamp
                } deriving (Read, Show)
 
 data SMessage = SPlain Nick

@@ -1,4 +1,3 @@
-{-# LANGUAGE UnicodeSyntax #-}
 
 module Client.Connect (processClient) where
 
@@ -15,15 +14,15 @@ import Text.Printf (printf)
 import Client.Format
 import Hach.Types
 
-processClient ∷ (String, String) → IO ()
+processClient :: (String, String) -> IO ()
 processClient (serverIP, nick) = do
   putStrLn $ "Connected to " ++ serverIP
   withSocketsDo $
-    do h ← connectTo serverIP $ PortNumber 7123
+    do h <- connectTo serverIP $ PortNumber 7123
        hSetBuffering h LineBuffering
        client nick h
 
-client ∷ Nick → Handle → IO ()
+client :: Nick -> Handle -> IO ()
 client nick h = forkIO
   (handle onDisconnect $ forever $ hGetLine h >>= printMessage . read) >>
   (hPrint h $ C2S nick CSetNick) >>
@@ -36,6 +35,6 @@ client nick h = forkIO
           onExit (SomeException _) = putStrLn $ nick ++" has left"
           onDisconnect (SomeException _) = putStrLn "Server closed connection"
 
-printMessage ∷ S2C → IO ()
+printMessage :: S2C -> IO ()
 printMessage message =
   printf (format message) (formatTime defaultTimeLocale timeFormat (time message)) (text message)

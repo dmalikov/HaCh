@@ -1,4 +1,3 @@
-{-# LANGUAGE UnicodeSyntax #-}
 module NClient.GUI (gui) where
 
 import Control.Applicative ((<$>))
@@ -15,48 +14,48 @@ import NClient.Message.Format
 import qualified NClient.Message.History as H
 import qualified NClient.Message.Split as S
 
-gui ∷ (Input, Output) → IO ()
+gui :: (Input, Output) -> IO ()
 gui (i,o) = do
-  history ← newIORef $ H.empty 10
-  messages ← newList (getNormalAttr defaultContext)
-  newMessage ← editWidget
-  box ← vBox messages newMessage
-  ui ← centered box
-  fg ← newFocusGroup
+  history <- newIORef $ H.empty 10
+  messages <- newList (getNormalAttr defaultContext)
+  newMessage <- editWidget
+  box <- vBox messages newMessage
+  ui <- centered box
+  fg <- newFocusGroup
   void $ addToFocusGroup fg newMessage
-  c ← newCollection
+  c <- newCollection
   void $ addToCollection c ui fg
   -- Send message to server
-  newMessage `onActivate` \this →
+  newMessage `onActivate` \this ->
     getEditText this >>= toC2S . unpack >>= writeChan o
   --
   -- Add send message to history
-  newMessage `onActivate` \this →
-    getEditText this >>= \t → atomicModifyIORef history (\h → let α = H.prepend (unpack t) h in (α, H.line α)) >>= setEditText this . pack
+  newMessage `onActivate` \this ->
+    getEditText this >>= \t -> atomicModifyIORef history (\h -> let a = H.prepend (unpack t) h in (a, H.line a)) >>= setEditText this . pack
   --
   -- Catch history movements
-  newMessage `onKeyPressed` \this k m →
+  newMessage `onKeyPressed` \this k m ->
     case (k,m) of
-      (KUp, []) → do
-        t ← getEditText this
-        t' ← atomicModifyIORef history $
-          \h → let h' = H.next (unpack t) h in (h', H.line h')
+      (KUp, []) -> do
+        t <- getEditText this
+        t' <- atomicModifyIORef history $
+          \h -> let h' = H.next (unpack t) h in (h', H.line h')
         setEditText this (pack t')
         return True
-      (KDown, []) → do
-        t' ← atomicModifyIORef history $
-          \h → let h' = H.previous h in (h', H.line h')
+      (KDown, []) -> do
+        t' <- atomicModifyIORef history $
+          \h -> let h' = H.previous h in (h', H.line h')
         setEditText this (pack t')
         return True
-      _ → return False
+      _ -> return False
   --
   -- Read server messages when they come
-  void . forkIO . forever $ readChan i >>= \m → do
+  void . forkIO . forever $ readChan i >>= \m -> do
     let addMessage f xs ys = textWidget f xs >>= addToList ys xs >> scrollDown ys
     schedule $
-      do a:as ← S.words (fromS2C m) . region_width <$> getCurrentSize messages
+      do a:as <- S.words (fromS2C m) . region_width <$> getCurrentSize messages
          addMessage (formatter Tail m) (pack a) messages
-         forM_ as $ \γ → addMessage (formatter Full m) (pack γ) messages
+         forM_ as $ \γ -> addMessage (formatter Full m) (pack γ) messages
     threadDelay 10000
   --
   runUi c defaultContext
