@@ -1,11 +1,18 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Hach.Types
   ( Nick, Timestamp
   , CMessage(..), SMessage(..)
   , C2S(..), S2C(..)
+  , fromS2C, toC2S
   ) where
 
+import Control.Arrow (second)
+import Data.Char (isSpace)
+import Data.Monoid ((<>))
+import Data.Text as T
 import Data.Time
-import Data.Text
+import System.Exit (exitSuccess)
+import System.Locale (defaultTimeLocale)
 
 type Nick = String
 type Timestamp = UTCTime
@@ -27,3 +34,21 @@ data CMessage = CPlain
               | CAction
               | CSetNick
                 deriving (Read, Show)
+
+fromS2C :: S2C -> Text
+fromS2C (S2C message (SPlain n) t) = "[" <> formatTime' t <> "] <" <> pack n <> ">: " <> message <> "\n"
+fromS2C (S2C message (SAction n) t) = "[" <> formatTime' t <> "] *" <> pack n <> " " <> message <> "\n"
+fromS2C (S2C message (SSetNick n) t) = "[" <> formatTime' t <> "] " <> pack n <> " " <> message <> "\n"
+fromS2C (S2C message  SSystem t) = "[" <> formatTime' t <> "] ! " <> message <> "\n"
+
+formatTime' :: Timestamp -> Text
+formatTime' = pack . formatTime defaultTimeLocale "%T"
+
+toC2S :: T.Text -> IO C2S
+toC2S m = case format m of
+  ("/exit", _) -> exitSuccess
+  ("/nick", t) -> return $ C2S t CSetNick
+  ("/me", t) -> return $ C2S t CAction
+  _ -> return $ C2S (T.reverse . T.drop 1 $ T.reverse m) CPlain
+  where format = second (T.reverse . dropSpaces . T.reverse . dropSpaces) . T.break isSpace . dropSpaces
+        dropSpaces = T.dropWhile isSpace

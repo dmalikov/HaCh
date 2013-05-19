@@ -9,7 +9,6 @@ import Data.Text (pack)
 import Network
 import System.IO
 
-import Client.Format
 import Hach.Types
 
 processClient :: (String, String) -> IO ()
@@ -34,4 +33,10 @@ client nick h = forkIO
           onDisconnect (SomeException _) = putStrLn "Server closed connection"
 
 printMessage :: S2C -> IO ()
-printMessage message = print $ format message
+printMessage message = print $ fromS2C message
+
+commandAction :: String
+commandAction = "/me "
+
+commandSetNick :: String
+commandSetNick = "/nick "

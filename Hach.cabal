@@ -32,8 +32,7 @@ Executable hach-client
   Main-is:              Client.hs
   HS-Source-Dirs:       client, libhach
   Other-modules:        Client.Args,
-                        Client.Connect,
-                        Client.Format
+                        Client.Connect
 
 Executable hach-nclient
   Build-Depends:        vty >= 4.7,
