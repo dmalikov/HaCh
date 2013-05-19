@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE CPP, ScopedTypeVariables #-}
 module NClient.Connect (connect, Input, Output) where
 
 import Control.Concurrent (forkIO)
@@ -7,6 +7,9 @@ import Control.Exception (SomeException, catch)
 import Control.Monad (forever, void)
 import Hach.Types
 import Network
+#if ! MIN_VERSION_base(4,6,0)
+import Prelude hiding (catch)
+#endif
 import System.Exit (exitFailure, exitSuccess)
 import System.IO (hGetLine, hPrint, hSetBuffering, BufferMode(LineBuffering))
 
