@@ -1,13 +1,13 @@
 module Hach.Types
-  ( Nick, Text, Timestamp
+  ( Nick, Timestamp
   , CMessage(..), SMessage(..)
   , C2S(..), S2C(..)
   ) where
 
 import Data.Time
+import Data.Text
 
 type Nick = String
-type Text = String
 type Timestamp = UTCTime
 
 data S2C = S2C { text :: Text

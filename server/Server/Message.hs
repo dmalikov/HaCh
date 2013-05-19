@@ -1,18 +1,22 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Server.Message where
 
+import Data.Monoid ((<>))
+import Data.Text (pack)
 import Hach.Types
 
 connectedClientM :: Nick -> Timestamp -> S2C
-connectedClientM η = S2C (η ++ " is connected.") SSystem
+connectedClientM n = S2C ((pack n) <> " is connected.") SSystem
 
 existedNickM :: Nick -> Timestamp -> S2C
-existedNickM η = S2C ("Nickname " ++ η ++ " is already in use.") SSystem
+existedNickM n = S2C ("Nickname " <> (pack n) <> " is already in use.") SSystem
 
 leftClientM ::  Nick -> Timestamp -> S2C
-leftClientM η = S2C (η ++ " has left conversation.") SSystem
+leftClientM n = S2C ((pack n) <> " has left conversation.") SSystem
 
 settedNickM :: Nick -> Nick -> Timestamp -> S2C
-settedNickM nickFrom nickTo = S2C ("is know as " ++ nickTo ++ ".") (SSetNick nickFrom)
+settedNickM nickFrom nickTo = S2C ("is know as " <> (pack nickTo) <> ".") (SSetNick nickFrom)
 
 undefinedNickM :: Timestamp -> S2C
 undefinedNickM = S2C "To join a chat please set another nick with /nick command." SSystem
