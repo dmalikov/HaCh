@@ -1,5 +1,5 @@
 Name:                   Hach
-Version:                0.1.0
+Version:                0.1.1
 Category:               Network
 Synopsis:               Simple chat
 Description:            Simple example of chat application. Consists of 3 components: hach-server, hach-client (simple console client), hach-nclient (vty-ui client).
