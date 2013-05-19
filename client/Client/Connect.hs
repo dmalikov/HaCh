@@ -5,12 +5,9 @@ import Control.Concurrent (forkIO)
 import Control.Exception
 import Control.Monad (forever)
 import Data.List (isPrefixOf)
-import Data.Time.Format
-import Data.Text (pack, unpack)
+import Data.Text (pack)
 import Network
 import System.IO
-import System.Locale
-import Text.Printf (printf)
 
 import Client.Format
 import Hach.Types
@@ -37,5 +34,4 @@ client nick h = forkIO
           onDisconnect (SomeException _) = putStrLn "Server closed connection"
 
 printMessage :: S2C -> IO ()
-printMessage message =
-  printf (format message) (formatTime defaultTimeLocale timeFormat (time message)) (unpack $ text message)
+printMessage message = print $ format message

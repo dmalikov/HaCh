@@ -15,17 +15,18 @@ import Graphics.Vty.Widgets.Text
 import Graphics.Vty.Widgets.Util
 import System.Exit (exitSuccess)
 import System.Locale (defaultTimeLocale)
-import Text.Printf (printf)
 import Text.Trans.Tokenize
 
 import Hach.Types
 
 fromS2C :: S2C -> T.Text
-fromS2C m = T.pack $ printf (T.unpack . format $ messageType m) (formatTime defaultTimeLocale "%T" $ time m) (T.unpack $ text m)
-  where format (SPlain n) = "[%s] <" <> (T.pack n) <> ">: %s\n"
-        format (SAction n) = "[%s] *" <> (T.pack n) <> " %s\n"
-        format (SSetNick n) = "[%s] "  <> (T.pack n) <> " %s\n"
-        format SSystem = "[%s] ! %s\n"
+fromS2C (S2C message (SPlain n) t) = "[" <> formatTime' t <> "] <" <> T.pack n <> ">: " <> message <> "\n"
+fromS2C (S2C message (SAction n) t) = "[" <> formatTime' t <> "] *" <> T.pack n <> " " <> message <> "\n"
+fromS2C (S2C message (SSetNick n) t) = "[" <> formatTime' t <> "] " <> T.pack n <> " " <> message <> "\n"
+fromS2C (S2C message  SSystem t) = "[" <> formatTime' t <> "] ! " <> message <> "\n"
+
+formatTime' :: Timestamp -> T.Text
+formatTime' = T.pack . formatTime defaultTimeLocale "%T"
 
 toC2S :: T.Text -> IO C2S
 toC2S m = case format m of
