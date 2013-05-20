@@ -4,6 +4,7 @@ module Client.Connect (processClient) where
 import Control.Concurrent (forkIO)
 import Control.Exception
 import Control.Monad (forever)
+import Data.Monoid ((<>))
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import Network
@@ -17,19 +18,19 @@ processClient (serverIP, nick) = do
   withSocketsDo $
     do h <- connectTo serverIP $ PortNumber 7123
        hSetBuffering h LineBuffering
-       client nick h
+       client (T.pack nick) h
 
 client :: Nick -> Handle -> IO ()
 client nick h = forkIO
   (handle onDisconnect $ forever $ hGetLine h >>= printMessage . read) >>
-  (hPrint h $ C2S (T.pack nick) CSetNick) >>
+  (hPrint h $ C2S nick CSetNick) >>
   (handle onExit $ forever $ TIO.getLine >>= hPutStrLn h . processMessage >> hideOwnMessage)
     where processMessage t
             | commandAction  `T.isPrefixOf` t = show $ C2S (T.drop (T.length commandAction) t) CAction
             | commandSetNick `T.isPrefixOf` t = show $ C2S (T.drop (T.length commandSetNick) t) CSetNick
             | otherwise = show $ C2S t CPlain
           hideOwnMessage = putStrLn "\ESC[2A"
-          onExit (SomeException _) = putStrLn $ nick ++ " has left"
+          onExit (SomeException _) = TIO.putStrLn $ nick <> " has left"
           onDisconnect (SomeException _) = putStrLn "Server closed connection"
 
 printMessage :: S2C -> IO ()

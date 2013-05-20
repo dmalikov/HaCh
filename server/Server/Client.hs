@@ -4,7 +4,6 @@ import Control.Applicative ((<$>))
 import Control.Concurrent
 import Control.Exception
 import Control.Monad (forever)
-import Data.Text (unpack)
 import Data.Time.Clock (getCurrentTime)
 import System.IO
 
@@ -18,7 +17,7 @@ import Server.Storage
 readC :: Chan (Int, S2C) -> Handle -> IO ()
 readC ch h = hPrint h =<< snd <$> readChan ch
 
-clientProcessing :: History -> Storage -> Chan (Int, S2C) -> Handle -> Int -> IO ()
+clientProcessing :: History -> NickStorage -> Chan (Int, S2C) -> Handle -> Int -> IO ()
 clientProcessing history storage ch h cId = do
   ch' <- dupChan ch
   forkIO $ handle_ $ forever $ readC ch' h
@@ -38,26 +37,26 @@ clientProcessing history storage ch h cId = do
                                         putMessage history m
                                           where m = S2C a (SAction n) t
               go n (C2S a CSetNick) = do
-                nickExists <- doesNickExist storage (unpack a)
+                nickExists <- doesNickExist storage a
                 if nickExists
-                  then hPrint h $ existedNickM (unpack a) t
+                  then hPrint h $ existedNickM a t
                   else do writeChan ch' (cId, m)
                           putMessage history m
-                          putNick storage cId (unpack a)
-                            where m = settedNickM n (unpack a) t
+                          putNick storage cId a
+                            where m = settedNickM n a t
       Nothing -> do
         go $ read message
         putStrLn message
         where go :: C2S -> IO ()
               go (C2S n CSetNick) = do
-                nickExists <- doesNickExist storage (unpack n)
+                nickExists <- doesNickExist storage n
                 if nickExists
-                  then do hPrint h $ existedNickM (unpack n) t
+                  then do hPrint h $ existedNickM n t
                           hPrint h $ undefinedNickM t
                   else do DT.mapM (hPrint h) . lastNMinutes 10 t =<< getMessages history
                           writeChan ch' (cId, m)
                           putMessage history m
-                          putNick storage cId (unpack n)
-                            where m = connectedClientM (unpack n) t
+                          putNick storage cId n
+                            where m = connectedClientM n t
               go (C2S _ _) = hPrint h $ undefinedNickM t
   where handle_ = handle $ \(SomeException e) -> print e

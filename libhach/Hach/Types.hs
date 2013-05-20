@@ -14,7 +14,7 @@ import Data.Time
 import System.Exit (exitSuccess)
 import System.Locale (defaultTimeLocale)
 
-type Nick = String
+type Nick = Text
 type Timestamp = UTCTime
 
 data S2C = S2C { text :: Text
@@ -36,13 +36,13 @@ data CMessage = CPlain
                 deriving (Read, Show)
 
 fromS2C :: S2C -> Text
-fromS2C (S2C message (SPlain n) t) = "[" <> formatTime' t <> "] <" <> pack n <> ">: " <> message <> "\n"
-fromS2C (S2C message (SAction n) t) = "[" <> formatTime' t <> "] *" <> pack n <> " " <> message <> "\n"
-fromS2C (S2C message (SSetNick n) t) = "[" <> formatTime' t <> "] " <> pack n <> " " <> message <> "\n"
+fromS2C (S2C message (SPlain n) t) = "[" <> formatTime' t <> "] <" <> n <> ">: " <> message <> "\n"
+fromS2C (S2C message (SAction n) t) = "[" <> formatTime' t <> "] *" <> n <> " " <> message <> "\n"
+fromS2C (S2C message (SSetNick n) t) = "[" <> formatTime' t <> "] " <> n <> " " <> message <> "\n"
 fromS2C (S2C message  SSystem t) = "[" <> formatTime' t <> "] ! " <> message <> "\n"
 
 formatTime' :: Timestamp -> Text
-formatTime' = pack . formatTime defaultTimeLocale "%T"
+formatTime' = T.pack . formatTime defaultTimeLocale "%T"
 
 toC2S :: T.Text -> IO C2S
 toC2S m = case format m of

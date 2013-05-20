@@ -1,6 +1,6 @@
 
 module Server.Storage
-  ( Storage(..)
+  ( NickStorage(..)
   , newStorage, getNick, putNick, delId
   , doesNickExist
   , showStorage
@@ -8,29 +8,27 @@ module Server.Storage
 
 import Control.Applicative ((<$>))
 import Control.Concurrent.MVar
-
 import qualified Data.Map as M
-
-import Hach.Types
+import Data.Text
 
 type ClientId = Int
 
-newtype Storage = Storage (MVar (M.Map ClientId Nick))
+data NickStorage = NickStorage (MVar (M.Map ClientId Text))
 
-newStorage :: IO Storage
-newStorage = Storage <$> newMVar M.empty
+newStorage :: IO NickStorage
+newStorage = NickStorage <$> newMVar M.empty
 
-getNick :: Storage -> ClientId -> IO (Maybe Nick)
-getNick (Storage s) c = M.lookup c <$> readMVar s
+getNick :: NickStorage -> ClientId -> IO (Maybe Text)
+getNick (NickStorage s) c = M.lookup c <$> readMVar s
 
-putNick :: Storage -> ClientId -> Nick -> IO ()
-putNick (Storage s) c n = modifyMVar_ s $ return . M.insert c n
+putNick :: NickStorage -> ClientId -> Text -> IO ()
+putNick (NickStorage s) c n = modifyMVar_ s $ return . M.insert c n
 
-delId :: Storage -> ClientId -> IO ()
-delId (Storage s) c = modifyMVar_ s $ return . M.delete c
+delId :: NickStorage -> ClientId -> IO ()
+delId (NickStorage s) c = modifyMVar_ s $ return . M.delete c
 
-doesNickExist :: Storage -> Nick -> IO Bool
-doesNickExist (Storage s) n = elem n <$> M.elems <$> readMVar s
+doesNickExist :: NickStorage -> Text -> IO Bool
+doesNickExist (NickStorage s) n = elem n <$> M.elems <$> readMVar s
 
-showStorage :: Storage -> IO ()
-showStorage (Storage s) = print =<< readMVar s
+showStorage :: NickStorage -> IO ()
+showStorage (NickStorage s) = print =<< readMVar s

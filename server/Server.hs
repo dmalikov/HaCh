@@ -15,14 +15,14 @@ import Server.Message
 import Server.Storage
 import Hach.Types
 
-serve :: Socket -> History -> Storage -> Chan (Int, S2C) -> Int -> IO ()
+serve :: Socket -> History -> NickStorage -> Chan (Int, S2C) -> Int -> IO ()
 serve sock history storage ch !cId = do
   (s, _) <- accept sock
   h <- socketToHandle s ReadWriteMode
   hSetBuffering h LineBuffering
   forkIO $ handle (onDisconnect ch) $ clientProcessing history storage ch h cId
   serve sock history storage ch $ cId + 1
-  where 
+  where
     onDisconnect :: Chan (Int, S2C) -> SomeException -> IO ()
     onDisconnect ch' _ = do
       maybeNick <- getNick storage cId
