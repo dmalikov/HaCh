@@ -17,7 +17,7 @@ Cabal-version:          >= 1.6
 Homepage:               http://github.com/dmalikov/HaCh
 
 Library
-  Build-Depends:        base >= 3,
+  Build-Depends:        base >= 3 && <5,
                         containers,
                         old-locale,
                         network
