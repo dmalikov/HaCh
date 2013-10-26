@@ -20,6 +20,7 @@ serve sock history storage ch !cId = do
   (s, _) <- accept sock
   h <- socketToHandle s ReadWriteMode
   hSetBuffering h LineBuffering
+  hSetBuffering stdout NoBuffering
   forkIO $ handle (onDisconnect ch) $ clientProcessing history storage ch h cId
   serve sock history storage ch $ cId + 1
   where
