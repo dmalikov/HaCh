@@ -17,7 +17,7 @@ emptyHistory :: IO History
 emptyHistory = History <$> newMVar S.empty
 
 putMessage :: History -> S2C -> IO ()
-putMessage (History a) μ = modifyMVar_ a (\h -> return $ h S.|> μ)
+putMessage (History a) m = modifyMVar_ a (\h -> return $ h S.|> m)
 
 getMessages :: History -> IO (S.Seq S2C)
 getMessages (History a) = readMVar a
@@ -25,5 +25,5 @@ getMessages (History a) = readMVar a
 lastNMinutes :: Int -> Timestamp -> S.Seq S2C -> S.Seq S2C
 lastNMinutes minutes currentTime = S.takeWhileR inLastMinutes
   where inLastMinutes :: S2C -> Bool
-        inLastMinutes μ = diffUTCTime currentTime (time μ) < nominalMinutes
+        inLastMinutes m = diffUTCTime currentTime (time m) < nominalMinutes
           where nominalMinutes = 60 * fromIntegral minutes :: NominalDiffTime

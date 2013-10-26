@@ -27,10 +27,10 @@ serve sock history storage ch !cId = do
     onDisconnect :: Chan (Int, S2C) -> SomeException -> IO ()
     onDisconnect ch' _ = do
       maybeNick <- getNick storage cId
-      τ <- getCurrentTime
+      t <- getCurrentTime
       case maybeNick of
-        Just η -> do
-          writeChan ch' (cId, leftClientM η τ)
+        Just n -> do
+          writeChan ch' (cId, leftClientM n t)
           delId storage cId
           showStorage storage
         Nothing -> putStrLn "Error: undefined user has left conversation"

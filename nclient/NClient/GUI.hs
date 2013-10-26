@@ -54,7 +54,7 @@ gui (i,o) = do
     schedule $
       do a:as <- S.words (fromS2C m) . region_width <$> getCurrentSize messages
          addMessage (formatter Tail m) a messages
-         forM_ as $ \γ -> addMessage (formatter Full m) γ messages
+         forM_ as $ \g -> addMessage (formatter Full m) g messages
     threadDelay 10000
   --
   runUi c defaultContext
