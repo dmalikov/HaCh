@@ -3,16 +3,16 @@
 [![Build Status](https://secure.travis-ci.org/dmalikov/HaCh.png?branch=master)](http://travis-ci.org/dmalikov/HaCh)
 
 ## What is it? ##
-**HaCh** is a simple **Ch**at written in **Ha**skell. It consists of 3 separate programs: 
+**HaCh** is a simple **Ch**at written in **Ha**skell. It consists of 3 separate programs:
 
-*    `hach-server`  
+*    `hach-server`
 
-*    `hach-client`  
+*    `hach-client`
 
-*    `hach-nclient`  
+*    `hach-nclient`
 
-It uses [`Chan`s]() via sockets for message broadcasting and [vty](http://hackage.haskell.org/package/vty) terminal GUI library for a client interface. 
-  
+It uses [`Chan`s]() via sockets for message broadcasting and [vty](http://hackage.haskell.org/package/vty) terminal GUI library for a client interface.
+
 ## What it was written for? ##
 It was written as an example of solving the following specification:
 
